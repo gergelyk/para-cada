@@ -20,6 +20,8 @@ Both options are relatively complex. This is where cada can help. Simply do:
 cada 'tar xzvf *.tgz'
 ```
 
+![](docs/example.png)
+
 Cada knows where glob expression is. It executes entire command with subsequent values corresponding to this expression. Additionally, user may transform those values using regular Python syntax. Take a look at the examples below and the [tutorial](https://github.com/gergelyk/para-cada/blob/master/cada/core.py).
 
 ## Installation
