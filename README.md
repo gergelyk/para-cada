@@ -50,7 +50,7 @@ cada 'mv *.txt {i:04d}_{}'
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
 # print filenames where stem is shorter than 3 characters
-cada '{e} * && echo {s}' 'str(len(p.stem) < 3).lower()' -s
+cada '{} && echo *' 'str(len(p.stem) < 3).lower()' -s
 
 # set executable attribute to the files with a shebang and remove it from remaining files
 cada 'chmod {e}x **/*.*' '"-+"[p.open("rb").read(2) == b"#!"]' -i subprocess.check_output
