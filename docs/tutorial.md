@@ -78,6 +78,8 @@ mv foo.txt 1.txt
 
 Check `--sort` option to determine the execution order. Use user-defined expression to reverse or modify indexing.
 
+Note: By default, cada applies natural sorting provided by [natsort](https://github.com/SethMMorton/natsort) library.
+
 ```sh
 cada 'mv *.txt {}.txt' '2-i' -d
 mv bar.txt 2.txt
