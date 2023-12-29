@@ -49,7 +49,7 @@ cada 'mv *.txt {i:04d}_{}'
 # to each `.tar` file add a suffix that represents MD5 sum calculated over the file content
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
-# print filenames shorter than 3 characters
+# print filenames where stem is shorter than 3 characters
 cada '{e} * && echo {s}' 'str(len(p.stem) < 3).lower()' -s
 
 # set executable attribute to the files with a shebang and remove it from remaining files
