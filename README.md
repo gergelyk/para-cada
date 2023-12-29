@@ -1,6 +1,6 @@
 # para-cada
 
-**Para cada** in Spanish means **For each**. The tool executes your command for each file selected using glob expression(s).
+*Para cada* in Spanish means *For each*. The tool executes your command for each file selected using glob expression(s).
 
 Why? Let's say you have multiple `.tgz` archives and you would like to extract them in one shot. In bash you can do:
 
@@ -32,7 +32,7 @@ pip install para-cada
  
 ## Examples
 
-It is recommended to run examples below in the **dry mode**, by adding `-d` flag. This way you will only simulate what would happen without actually applying any changes to the filesystem.
+It is recommended to run examples below in the *dry mode*, by adding `-d` flag. This way you will only simulate what would happen without actually applying any changes to the filesystem.
 
 ```sh
 # backup all the `.txt` files in the current directory
@@ -41,21 +41,33 @@ cada 'cp *.txt {}.bkp'
 # restore backups above
 cada 'mv *.bkp {}' 'p.stem'
 
-# rename .txt files so that the names look like titles
-# and extensions are in lower case
-cada 'mv *.txt {}' 'Path(s0.title()).with_suffix(p0.suffix.lower())'
+# replace `conf` and `config` by `cfg` in the file names of `.ini` files; be case insensitive
+cada 'mv *.ini {}' 're.sub("conf(ig)?", "cfg", s, flags=re.IGNORECASE)'
 
-# replace 'config' by 'conf' in the names of the files in current dir
-cada 'mv * {}' 's.replace("config", "conf")'
+# change file names from snake-case to camel-case, leave extensions in lower case
+cada 'mv *.* {}' 'Path(s.title().replace("_", "")).with_suffix(p0.suffix.lower())'
 
-# prepend each text file with subsequent numbers, 0-padded
+# prepend each text file with subsequent numbers, 4 digits wide, 0-padded
 cada 'mv *.txt {i:04d}_{}'
 
-# to each text file add a suffix that represents MD5 sum calculated over the file content
+# to each `.txt` file add a suffix that represents MD5 sum calculated over the file content
 cada 'mv *.txt {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
+
+# set executable attribute to the files that begin with a shebang and remove it from remaining files
+cada 'chmod {e}x **/*.*' '"-+"[p.open("rb").read(2) == b"#!"]' -i subprocess.check_output
 
 # put your images in subdirectories according to their creation date
 cada 'mkdir -p {e} && mv *.jpg {e}' \
     'fromtimestamp(getctime(s)).strftime("%Y-%m-%d")' \
     -i os.path.getctime -i datetime.datetime.fromtimestamp
+
+# put your images in subdirectories according to their MIME type
+cada 'mkdir -p {e} && mv * {e}' \
+    'check_output(f"file {s} -b --mime-type", shell=True).decode().strip()' \
+    -i subprocess.check_output
+    
+# compile simple C++ project without any build system
+mkdir -p build
+cada 'g++ -c src/*.cpp -I inc -o build/{}.o' 'p.stem
+g++ build/*.o -o build/app
 ```
