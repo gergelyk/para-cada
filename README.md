@@ -47,13 +47,13 @@ cada 'mv *.ini {}' 're.sub("conf(ig)?", "cfg", s, flags=re.IGNORECASE)'
 # change file names from snake-case to camel-case, leave extensions in lower case
 cada 'mv *.* {}' 'Path(s.title().replace("_", "")).with_suffix(p0.suffix.lower())'
 
-# prepend each text file with subsequent numbers, 4 digits wide, 0-padded
+# prepend each `.txt` file with subsequent numbers; 4 digits wide, 0-padded
 cada 'mv *.txt {i:04d}_{}'
 
-# to each `.txt` file add a suffix that represents MD5 sum calculated over the file content
-cada 'mv *.txt {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
+# to each `.tar` file add a suffix that represents MD5 sum calculated over the file content
+cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
-# set executable attribute to the files that begin with a shebang and remove it from remaining files
+# set executable attribute to the files with a shebang and remove it from remaining files
 cada 'chmod {e}x **/*.*' '"-+"[p.open("rb").read(2) == b"#!"]' -i subprocess.check_output
 
 # put your images in subdirectories according to their creation date
@@ -68,6 +68,6 @@ cada 'mkdir -p {e} && mv * {e}' \
     
 # compile simple C++ project without any build system
 mkdir -p build
-cada 'g++ -c src/*.cpp -I inc -o build/{}.o' 'p.stem
+cada 'g++ -c src/*.cpp -I inc -o build/{}.o' 'p.stem'
 g++ build/*.o -o build/app
 ```
