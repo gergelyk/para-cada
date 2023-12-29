@@ -1,20 +1,16 @@
 # para-cada
 
-*Para cada* in Spanish means *For each*. The tool executes your command for each file selected using glob expression(s).
+*Para Cada* in Spanish means *For Each*. The tool executes your command for each file selected using glob expression(s).
 
-Why? Let's say you have multiple `.tgz` archives and you would like to extract them in one shot. In bash you can do:
+Why? Let's say you have multiple `.tgz` archives and you would like to extract them in one shot. Some of the options available in bash are:
 
 ```sh
 ls *.tgz | xargs -IT tar xzvf T
-```
-
-or alternatively:
-
-```sh
 for T in *.tgz; do tar xzvf $T; done
+find . -type f -name '*.tgz' -exec tar xzvf {} \;
 ```
 
-Both options are relatively complex. This is where cada can help. Simply do:
+All of them are relatively complex. This is where cada can help. Simply do:
 
 ```sh
 cada 'tar xzvf *.tgz'
