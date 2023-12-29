@@ -49,6 +49,9 @@ cada 'mv *.txt {i:04d}_{}'
 # to each `.tar` file add a suffix that represents MD5 sum calculated over the file content
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
+# add `.d` suffix to the names of all directories
+cada 'test -d * && mv {s} {s}.d'
+
 # print filenames where stem is shorter than 3 characters
 cada '{} && echo *' 'str(len(p.stem) < 3).lower()' -s
 
