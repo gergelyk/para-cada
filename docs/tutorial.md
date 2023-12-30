@@ -31,9 +31,19 @@ Variables `s0`, `s1`, `s2`...  refer to the values of subsequent glob expression
 
 ```sh
 cada 'cp *.txt {s0}.bkp' -d
+cp bar.txt bar.txt.bkp
+cp foo.txt foo.txt.bkp
 ```
 
 Note: Internally cada uses `str.format` function to render each part of the command. This simply means that `s0` should be wrapped in curly brackets.
+
+Glob expressions are automatically quoted. Remaining parts of the command are not. This means that you need to quote them manually if you expect e.g. spaces in the file names:
+
+```sh
+cada 'cp *.txt \"{s0}.bkp\"' -d
+cp bar.txt "bar.txt.bkp"
+cp foo.txt "foo.txt.bkp"
+```
 
 Users can define own expressions to modify `s` values. User-defined expressions can be referred to using `e0`, `e1`, `e2`... variables.
 

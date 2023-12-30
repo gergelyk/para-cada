@@ -109,11 +109,11 @@ def run(command, expressions, dry_run, include_hidden, import_, silent, sort_alg
 
             context_formatting = {**context_vars, **context_strings, **context_exprs}
             cmd_parts_expanded = [
-                product_dict[i] if d else 
+                shlex.quote(product_dict[i]) if d else 
                 p.format(*default_arg, **context_formatting)
                 for i, (p, d) in enumerate(zip(cmd_parts, glob_detections))
             ]
             progress = 100 * index // len(globs_product)
-            executor(shlex.join(cmd_parts_expanded), progress, silent, stop_at_error)
+            executor(' '.join(cmd_parts_expanded), progress, silent, stop_at_error)
     except CommandFailure:
         pass
