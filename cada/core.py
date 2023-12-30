@@ -107,7 +107,7 @@ def run(command, expressions, dry_run, include_hidden, import_, silent, sort_alg
             else:
                 default_arg = ()
 
-            context_formatting = {**context_vars, **context_strings, **context_exprs}
+            context_formatting = {**context_vars, **context_strings, **context_paths, **context_exprs}
             cmd_parts_expanded = [
                 shlex.quote(product_dict[i]) if d else 
                 p.format(*default_arg, **context_formatting)

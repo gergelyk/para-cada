@@ -99,7 +99,7 @@ mv foo.txt 1.txt
 Additional symbols can be imported using `-i` option.
 
 ```sh
-cada 'mv *.txt {e0}_by_{e1}.txt' 'p.stem' 'pwd.getpwuid(os.stat(s).st_uid).pw_name' -i os -i pwd -d
+cada 'mv *.txt {p.stem}_by_{e}.txt' 'pwd.getpwuid(os.stat(s).st_uid).pw_name' -i os -i pwd -d
 mv bar.txt bar_by_gkrason.txt
 mv foo.txt foo_by_gkrason.txt
 ```
@@ -108,7 +108,7 @@ This also allows for writing user-defined functions:
 
 ```sh
 echo 'import os, pwd; owner = lambda path: pwd.getpwuid(os.stat(path).st_uid).pw_name' > owner_plugin.py
-cada 'mv *.txt {e0}_by_{e1}.txt' 'p.stem' 'owner(s)' -i owner_plugin.owner -d
+cada 'mv *.txt {p.stem}_by_{e}.txt' 'owner(s)' -i owner_plugin.owner -d
 mv bar.txt bar_by_gkrason.txt
 mv foo.txt foo_by_gkrason.txt
 ```

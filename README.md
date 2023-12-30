@@ -37,7 +37,7 @@ Examples below assume that there are not spaces or special characters in the fil
 cada 'cp *.txt {}.bkp'
 
 # restore backups above
-cada 'mv *.bkp {}' 'p.stem'
+cada 'mv *.bkp {p.stem}'
 
 # replace `conf` and `config` by `cfg` in the file names of `.ini` files; be case insensitive
 cada 'mv *.ini {}' 're.sub("conf(ig)?", "cfg", s, flags=re.IGNORECASE)'
@@ -72,6 +72,6 @@ cada 'mkdir -p {e} && mv * {e}' \
     
 # compile simple C++ project without any build system
 mkdir -p build
-cada 'g++ -c src/*.cpp -I inc -o build/{}.o' 'p.stem'
+cada 'g++ -c src/*.cpp -I inc -o build/{p.stem}.o'
 g++ build/*.o -o build/app
 ```
