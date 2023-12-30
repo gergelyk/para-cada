@@ -42,7 +42,7 @@ def run_in_shell(cmd, progress, silent, stop_at_error):
     else:
         echo(Fore.GREEN + cmd + Style.RESET_ALL)
 
-    print(proc.stdout.decode(), end='' if silent else '\n')
+    print(proc.stdout.decode(), end='')
     sys.stdout.flush()
     
     if stop_at_error and proc.returncode:
@@ -114,6 +114,6 @@ def run(command, expressions, dry_run, include_hidden, import_, silent, sort_alg
                 for i, (p, d) in enumerate(zip(cmd_parts, glob_detections))
             ]
             progress = 100 * index // len(globs_product)
-            executor(' '.join(cmd_parts_expanded), progress, silent, stop_at_error)
+            executor(shlex.join(cmd_parts_expanded), progress, silent, stop_at_error)
     except CommandFailure:
         pass
