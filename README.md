@@ -30,6 +30,8 @@ pip install para-cada
 
 It is recommended to run examples below in the *dry mode*, by adding `-d` flag. This way you will only simulate what would happen without actually applying any changes to the filesystem.
 
+Examples below assume that there are not spaces or special characters in the filenames. Otherwise, some quotation would be required. 
+
 ```sh
 # backup all the `.txt` files in the current directory
 cada 'cp *.txt {}.bkp'
