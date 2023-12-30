@@ -33,7 +33,7 @@ Variables `s0`, `s1`, `s2`...  refer to the values of subsequent glob expression
 cada 'cp *.txt {s0}.bkp' -d
 ```
 
-Note: Internally cada uses `str.format` function to render the command. This simply means that `s0` should be wrapped in curly brackets.
+Note: Internally cada uses `str.format` function to render each part of the command. This simply means that `s0` should be wrapped in curly brackets.
 
 Users can define own expressions to modify `s` values. User-defined expressions can be referred to using `e0`, `e1`, `e2`... variables.
 
