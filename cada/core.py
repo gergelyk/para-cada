@@ -1,38 +1,19 @@
 #!/usr/bin/env python3
 import sys
+import re
 import glob
 import shlex
-import re
+import queue
+import subprocess
+import multiprocessing as mp
 from itertools import product
 from pathlib import Path
 from importlib import import_module
-from multiprocessing import Pool, Queue, Lock
-from queue import Empty, Full
 from itertools import repeat
 
 import glob2
-import subprocess
 import natsort
 from colorama import Fore, Style
-
-err_queue = Queue(1)
-
-class Printer:
-    def __init__(self):
-        self._lock = Lock()
-        
-    def __enter__(self):
-        self._lock.acquire()
-        return self
-    
-    def __exit__(self, *args):
-        sys.stderr.flush()
-        self._lock.release()
-
-    def show(self, *args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
-
-printer = Printer()
 
 class Terminate(Exception):
     pass
@@ -43,6 +24,45 @@ class CommandFailure(RuntimeError):
 class UserError(RuntimeError):
     pass 
 
+
+class PrinterImpl:
+
+    def show(self, *args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
+
+    def show_colored(self, color, *args, **kwargs):
+        self.show(*(color + str(a) + Style.RESET_ALL for a in args), **kwargs)
+        
+    def show_blue(self, *args, **kwargs):
+        self.show_colored(Fore.BLUE, *args, **kwargs)
+        
+    def show_green(self, *args, **kwargs):
+        self.show_colored(Fore.GREEN, *args, **kwargs)
+        
+    def show_red(self, *args, **kwargs):
+        self.show_colored(Fore.RED, *args, **kwargs)
+
+    def clear_line(self):
+        """move caret to the begining and clear to the end of line"""
+        self.show("\r\033[K", end='')
+
+
+class ReservedPrinter:
+    def __init__(self):
+        self._lock = mp.Lock()
+        self._impl = PrinterImpl()
+        
+    def __enter__(self):
+        self._lock.acquire()
+        return self._impl
+    
+    def __exit__(self, *args):
+        sys.stderr.flush()
+        self._lock.release()
+
+
+reserved_printer = ReservedPrinter()
+
 sort_algs = {
     'none': lambda x: x,
     'simple': lambda x: sorted(x),
@@ -50,37 +70,46 @@ sort_algs = {
     'natural-ignore-case': lambda x: natsort.natsorted(x, alg=natsort.ns.IGNORECASE),
 }
 
-def printe(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+err_queue = mp.Queue(1)
+progress = mp.Value('I', 0)
+SEP = '###'
 
-def do_nothing(*args, **kwargs):
-    pass
 
-def run_in_dry_mode(cmd, progress, silent, show_progress):
-    printe(Fore.BLUE + cmd + Style.RESET_ALL)
+def run_in_dry_mode(cmd, silent, show_curr_cmd, total):
+    with reserved_printer as printer:
+        printer.show_blue(cmd)
 
-def run_in_shell(cmd, progress, silent, show_progress):
-    echo = do_nothing if silent else printer.show
-    if show_progress:
-        with printer:
-            echo(Fore.BLUE + f'{cmd}  ### [progress: {progress}]%' + Style.RESET_ALL, end='')
+
+def run_in_shell(cmd, silent, show_curr_cmd, total):
+
+    if not silent:
+        with reserved_printer as printer:
+            printer.clear_line()
+            if show_curr_cmd:
+                printer.show_blue(cmd + '  ', end='')
+            printer.show_blue(f'{SEP} [progress: {progress.value} of {total}]', end='')
+            
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    with printer:
-        if show_progress:
-            echo("\r\033[K", end='') # move caret to the begining and clear to the end of line
+    with progress.get_lock():
+        progress.value += 1
 
-        if proc.returncode:
-            echo(Fore.RED + f"{cmd}  ### [returned: {proc.returncode}]" + Style.RESET_ALL)
-        else:
-            echo(Fore.GREEN + cmd + Style.RESET_ALL)
+    with reserved_printer as printer:
+        if not silent:
+            printer.clear_line()
+            if proc.returncode:
+                printer.show_red(f"{cmd}  {SEP} [returned: {proc.returncode}]")
+            else:
+                printer.show_green(cmd)
 
         printer.show(proc.stdout.decode(), end='')
     
     if proc.returncode:
         raise CommandFailure(f'Command returned {proc.returncode}')
 
+
 def is_glob(text):
     return glob.escape(text) != text
+
 
 def import_symbol(symbol):
     parts = symbol.split('.')
@@ -98,7 +127,8 @@ def call_guarded(ctx, f, *args, **kwargs):
         return f(*args, **kwargs)
     except Exception as exc:
         ctx = f'context: {", ".join(map(repr, ctx))}'
-        raise UserError(f"### Error in {f.__name__}(): {exc} [{ctx}]") from exc
+        raise UserError(f"{SEP} Error in {f.__name__}(): {exc} [{ctx}]") from exc
+
 
 class Runner:
     
@@ -161,8 +191,7 @@ class Runner:
             call_guarded(product_item, p.format, *default_arg, **context_formatting)
             for i, (p, d) in enumerate(zip(self._cmd_parts, self._glob_detections))
         ]
-        progress = 100 * index // len(self._globs_product)
-        self._executor(' '.join(cmd_parts_expanded), progress, self._silent, self._jobs == None)
+        self._executor(' '.join(cmd_parts_expanded), self._silent, self._jobs == None, len(self._globs_product))
 
     def _run_single_guarded(self, args):
         try:
@@ -170,18 +199,18 @@ class Runner:
         except CommandFailure as exc:
             try:
                 err_queue.put_nowait(3)
-            except Full:
+            except queue.Full:
                 pass
             
             if self._stop_at_error:
                 raise Terminate
         except UserError as exc:
-            with printer:
-                printer.show(Fore.RED + str(exc) + Style.RESET_ALL)            
+            with reserved_printer as printer:
+                printer.show_red(exc)
                 sys.stderr.flush()
             try:
                 err_queue.put_nowait(2)
-            except Full:
+            except queue.Full:
                 pass
             if self._stop_at_error:
                 raise Terminate
@@ -194,7 +223,7 @@ class Runner:
                     pass
             else:
                 processes = None if self._jobs == 0 else self._jobs
-                with Pool(processes) as p:
+                with mp.Pool(processes) as p:
                     for _ in p.imap(self._run_single_guarded, enumerate(self._globs_product)):
                         pass
         except Terminate as exc:
@@ -202,14 +231,14 @@ class Runner:
 
         try:
             # it's better to put something into the queue,
-            # otherwise err_queue.get_nowait() could occassionaly raise Empty
+            # otherwise err_queue.get_nowait() could occassionaly raise queue.Empty
             err_queue.put_nowait(0)
-        except Full:
+        except queue.Full:
             pass
         
         try:
             exit_code = err_queue.get()
-        except Empty:
+        except queue.Empty:
             pass
         else:
             exit(exit_code)
