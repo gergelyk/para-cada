@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import re
 import glob
@@ -185,18 +184,22 @@ class Runner:
             context_strings['s'] = context_strings['s0']
             context_paths['p'] = context_paths['p0']
 
+        context_full = {}
+        
         # vars below cannot be pickled, therefore there they cannot be moved to __init__
-        context_common = {'re': re, 'Path': Path}
+        context_common = {'re': re,
+                        'Path': Path,
+                        'sh': lambda cmd: subprocess.check_output(cmd.format(**context_full), shell=True).decode().splitlines()[0].strip()}
         context_imports = dict(import_symbol(s) for s in self._import)
 
-        context_full = {
+        context_full.update(
             **context_vars,
             **context_strings,
             **context_paths,
             **context_common,
             **context_imports
-        }
-        
+        )
+
         for f in self.filters:
             if not call_guarded(product_item, eval, f, context_full):
                 skip_command(product_item)

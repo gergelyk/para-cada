@@ -48,27 +48,25 @@ cada 'mv *.* {}' 'Path(s.title().replace("_", "")).with_suffix(p0.suffix.lower()
 # prepend each `.txt` file with subsequent numbers; 4 digits wide, 0-padded
 cada 'mv *.txt {i:04d}_{}'
 
+# add `.d` suffix to the names of all directories
+cada 'mv * {}.d' -f 'p.is_dir()'
+
+# print filenames where stem is shorter than 3 characters
+cada 'echo *' -f 'len(p.stem) < 5' -s
+
 # to each `.tar` file add a suffix that represents MD5 sum calculated over the file content
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
-# add `.d` suffix to the names of all directories
-cada 'test -d * && mv {} {}.d'
-
-# print filenames where stem is shorter than 3 characters
-cada '{} && echo *' 'str(len(p.stem) < 3).lower()' -s
-
 # set executable attribute to the files with a shebang and remove it from remaining files
-cada 'chmod {e}x **/*.*' '"-+"[p.open("rb").read(2) == b"#!"]'
+cada 'chmod {}x **/*' '"-+"[p.open("rb").read(2) == b"#!"]' -f 'p.is_file()'
 
 # put your images in subdirectories according to their creation date
-cada 'mkdir -p {e} && mv *.jpg {e}' \
-    'fromtimestamp(getctime(s)).strftime("%Y-%m-%d")' \
-    -i os.path.getctime -i datetime.datetime.fromtimestamp
-
+cada 'mkdir -p {} && mv *.jpg {}' \
+    'fromtimestamp(p.stat().st_ctime).strftime("%Y-%m-%d")' \
+    -i datetime.datetime.fromtimestamp
+    
 # put your images in subdirectories according to their MIME type
-cada 'mkdir -p {e} && mv * {e}' \
-    'check_output(f"file {s} -b --mime-type", shell=True).decode().strip()' \
-    -i subprocess.check_output
+cada 'mkdir -p {} && mv * {}' 'sh("file {s} -b --mime-type")'
     
 # compile simple C++ project without any build system
 mkdir -p build
