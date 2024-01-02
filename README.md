@@ -49,7 +49,7 @@ cada 'mv *.* {}' 'Path(s.title().replace("_", "")).with_suffix(p0.suffix.lower()
 cada 'mv *.txt {i:04d}_{}'
 
 # add `.d` suffix to the names of all directories
-cada 'mv * {}.d' -f 'p.is_dir()'
+cada 'mv * {}.d' -f x.is_dir
 
 # print filenames where stem is shorter than 3 characters
 cada 'echo *' -f 'len(p.stem) < 5' -s
@@ -58,10 +58,10 @@ cada 'echo *' -f 'len(p.stem) < 5' -s
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
 # set executable attribute to the files with a shebang and remove it from remaining files
-cada 'chmod {}x **/*' '"-+"[p.open("rb").read(2) == b"#!"]' -f 'p.is_file()'
+cada 'chmod {}x **/*' '"-+"[p.open("rb").read(2) == b"#!"]' -f x.is_file
 
 # put your images in subdirectories according to their creation date
-cada 'mkdir -p {} && mv *.jpg {}' 'x.ctime'
+cada 'mkdir -p {} && mv *.jpg {}' x.ctime
     
 # put your images in subdirectories according to their MIME type
 cada 'mkdir -p {} && mv * {}' 'sh("file {s} -b --mime-type")'
