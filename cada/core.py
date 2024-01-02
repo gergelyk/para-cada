@@ -3,11 +3,11 @@ import sys
 import glob
 import shlex
 import re
-import sys
 from itertools import product
 from pathlib import Path
 from importlib import import_module
 from multiprocessing import Pool, Queue
+from queue import Empty, Full
 from itertools import repeat
 
 import glob2
@@ -15,7 +15,15 @@ import subprocess
 import natsort
 from colorama import Fore, Style
 
-class CommandFailure(Exception):
+err_queue = Queue(1)
+
+class Terminate(Exception):
+    pass
+
+class CommandFailure(RuntimeError):
+    pass
+
+class UserError(RuntimeError):
     pass 
 
 sort_algs = {
@@ -25,14 +33,17 @@ sort_algs = {
     'natural-ignore-case': lambda x: natsort.natsorted(x, alg=natsort.ns.IGNORECASE),
 }
 
+def printe(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 def do_nothing(*args, **kwargs):
     pass
 
-def run_in_dry_mode(cmd, progress, silent, stop_at_error):
-    print(Fore.BLUE + cmd + Style.RESET_ALL)
+def run_in_dry_mode(cmd, progress, silent, show_progress):
+    printe(Fore.BLUE + cmd + Style.RESET_ALL)
 
-def run_in_shell(cmd, progress, silent, stop_at_error, show_progress):
-    echo = do_nothing if silent else print
+def run_in_shell(cmd, progress, silent, show_progress):
+    echo = do_nothing if silent else printe
     if show_progress:
         echo(Fore.BLUE + f'{cmd}  ### [progress: {progress}]%' + Style.RESET_ALL, end='')
         sys.stdout.flush()
@@ -44,10 +55,10 @@ def run_in_shell(cmd, progress, silent, stop_at_error, show_progress):
     else:
         echo(Fore.GREEN + cmd + Style.RESET_ALL)
 
-    print(proc.stdout.decode(), end='')
+    printe(proc.stdout.decode(), end='')
     sys.stdout.flush()
     
-    if stop_at_error and proc.returncode:
+    if proc.returncode:
         raise CommandFailure(f'Command returned {proc.returncode}')
 
 def is_glob(text):
@@ -63,6 +74,13 @@ def import_symbol(symbol):
         res = getattr(res, a)
     return (parts[-1], res)
 
+
+def call_guarded(ctx, f, *args, **kwargs):
+    try:
+        return f(*args, **kwargs)
+    except Exception as exc:
+        ctx = f'context: {", ".join(map(repr, ctx))}'
+        raise UserError(f"### Error in {f.__name__}(): {exc} [{ctx}]") from exc
 
 class Runner:
     
@@ -88,8 +106,8 @@ class Runner:
         context_vars = {'i': index}
         product_dict = dict(zip(self._glob_indices, product_item))
         
-        context_strings = {'s{}'.format(i): v for i, v in enumerate(product_dict.values())}
-        context_paths = {'p{}'.format(i): Path(v) for i, v in enumerate(product_dict.values())}
+        context_strings = {'s' + str(i): v for i, v in enumerate(product_dict.values())}
+        context_paths = {'p' + str(i): Path(v) for i, v in enumerate(product_dict.values())}
         if product_dict:
             context_strings['s'] = context_strings['s0']
             context_paths['p'] = context_paths['p0']
@@ -106,9 +124,9 @@ class Runner:
             **context_imports
         }
         
-        expr_vals = [eval(e, context_full) for e in self._expressions]
+        expr_vals = [call_guarded(product_item, eval, e, context_full) for e in self._expressions]
 
-        context_exprs = {'e{}'.format(i): v for i, v in enumerate(expr_vals)}
+        context_exprs = {'e' + str(i): v for i, v in enumerate(expr_vals)}
         if expr_vals:
             context_exprs['e'] = context_exprs['e0']
 
@@ -122,21 +140,56 @@ class Runner:
         context_formatting = {**context_vars, **context_strings, **context_paths, **context_exprs}
         cmd_parts_expanded = [
             shlex.quote(product_dict[i]) if d else 
-            p.format(*default_arg, **context_formatting)
+            call_guarded(product_item, p.format, *default_arg, **context_formatting)
             for i, (p, d) in enumerate(zip(self._cmd_parts, self._glob_detections))
         ]
         progress = 100 * index // len(self._globs_product)
-        self._executor(' '.join(cmd_parts_expanded), progress, self._silent, self._stop_at_error, self._jobs == None)
+        self._executor(' '.join(cmd_parts_expanded), progress, self._silent, self._jobs == None)
 
+    def _run_single_guarded(self, args):
+        try:
+            self._run_single(args)
+        except CommandFailure as exc:
+            try:
+                err_queue.put_nowait(3)
+            except Full:
+                pass
+            
+            if self._stop_at_error:
+                raise Terminate
+        except UserError as exc:
+            printe(Fore.RED + str(exc) + Style.RESET_ALL)            
+            try:
+                err_queue.put_nowait(2)
+            except Full:
+                pass
+            if self._stop_at_error:
+                raise Terminate
+        
     def run(self):       
 
-        try:        
-            if self._jobs is None:
-                list(map(self._run_single, enumerate(self._globs_product)))
+        try:           
+            if self._jobs is None or self._dry_run:
+                for _ in map(self._run_single_guarded, enumerate(self._globs_product)):
+                    pass
             else:
-                jobs = None if self._jobs == 0 else self._jobs
-                with Pool(jobs) as p:
-                    for _ in p.imap(self._run_single, enumerate(self._globs_product)):
+                processes = None if self._jobs == 0 else self._jobs
+                with Pool(processes) as p:
+                    for _ in p.imap(self._run_single_guarded, enumerate(self._globs_product)):
                         pass
-        except CommandFailure:
+        except Terminate as exc:
             pass
+
+        try:
+            # it's better to put something into the queue,
+            # otherwise err_queue.get_nowait() could occassionaly raise Empty
+            err_queue.put_nowait(0)
+        except Full:
+            pass
+        
+        try:
+            exit_code = err_queue.get()
+        except Empty:
+            pass
+        else:
+            exit(exit_code)
