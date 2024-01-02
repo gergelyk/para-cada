@@ -2,7 +2,6 @@
 
 Plans to be considered in the future:
 
-- execute in multiple threads
 - support user-defined plugins loaded from predefined location (~/.cada/plugins)
 - helper variables for reading size, c/a/m-time, r/w/x-attibs, user, group
 - ascending/descending sorting

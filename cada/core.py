@@ -6,7 +6,7 @@ import re
 from itertools import product
 from pathlib import Path
 from importlib import import_module
-from multiprocessing import Pool, Queue
+from multiprocessing import Pool, Queue, Lock
 from queue import Empty, Full
 from itertools import repeat
 
@@ -16,6 +16,22 @@ import natsort
 from colorama import Fore, Style
 
 err_queue = Queue(1)
+
+class Printer:
+    def __init__(self):
+        self._lock = Lock()
+        
+    def __enter__(self):
+        self._lock.acquire()
+        return self
+    
+    def __exit__(self, *args):
+        self._lock.release()
+        
+    def print(self, *args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
+
+printer = Printer()
 
 class Terminate(Exception):
     pass
@@ -43,20 +59,21 @@ def run_in_dry_mode(cmd, progress, silent, show_progress):
     printe(Fore.BLUE + cmd + Style.RESET_ALL)
 
 def run_in_shell(cmd, progress, silent, show_progress):
-    echo = do_nothing if silent else printe
+    echo = do_nothing if silent else printer.print
     if show_progress:
-        echo(Fore.BLUE + f'{cmd}  ### [progress: {progress}]%' + Style.RESET_ALL, end='')
-        sys.stdout.flush()
+        with printer:
+            echo(Fore.BLUE + f'{cmd}  ### [progress: {progress}]%' + Style.RESET_ALL, end='')
     proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    echo("\r\033[K", end='') # move caret to the begining and clear to the end of line
+    with printer:
+        if show_progress:
+            echo("\r\033[K", end='') # move caret to the begining and clear to the end of line
 
-    if proc.returncode:
-        echo(Fore.RED + f"{cmd}  ### [returned: {proc.returncode}]" + Style.RESET_ALL)
-    else:
-        echo(Fore.GREEN + cmd + Style.RESET_ALL)
+        if proc.returncode:
+            echo(Fore.RED + f"{cmd}  ### [returned: {proc.returncode}]" + Style.RESET_ALL)
+        else:
+            echo(Fore.GREEN + cmd + Style.RESET_ALL)
 
-    printe(proc.stdout.decode(), end='')
-    sys.stdout.flush()
+        printer.print(proc.stdout.decode(), end='')
     
     if proc.returncode:
         raise CommandFailure(f'Command returned {proc.returncode}')
@@ -158,7 +175,9 @@ class Runner:
             if self._stop_at_error:
                 raise Terminate
         except UserError as exc:
-            printe(Fore.RED + str(exc) + Style.RESET_ALL)            
+            with printer:
+                printer.print(Fore.RED + str(exc) + Style.RESET_ALL)            
+                sys.stderr.flush()
             try:
                 err_queue.put_nowait(2)
             except Full:
