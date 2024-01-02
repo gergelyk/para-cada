@@ -52,5 +52,5 @@ icu = ["PyICU (>=1.0.0)"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "f58138c70e01d8bd45becc71f40e32b083f62ea9d9106767bd3e09e5b723559c"
+python-versions = "^3.8"
+content-hash = "20eeb03aea7670e93fcdde2bbd57b3dba1e01a13591f92bf41684d8ed67d3bf7"
