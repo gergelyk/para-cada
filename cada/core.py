@@ -18,12 +18,20 @@ from colorama import Fore, Style
 class Terminate(Exception):
     pass
 
+class SkipCommand(Exception):
+    pass
+
 class CommandFailure(RuntimeError):
     pass
 
 class UserError(RuntimeError):
     pass 
 
+
+class EXIT_CODE:
+    SUCCESS = 0
+    CMD_GENERATION_ERROR = 2
+    CMD_EXECUTION_ERROR = 3
 
 class PrinterImpl:
 
@@ -41,6 +49,9 @@ class PrinterImpl:
         
     def show_red(self, *args, **kwargs):
         self.show_colored(Fore.RED, *args, **kwargs)
+        
+    def show_yellow(self, *args, **kwargs):
+        self.show_colored(Fore.YELLOW, *args, **kwargs)
 
     def clear_line(self):
         """move caret to the begining and clear to the end of line"""
@@ -77,6 +88,15 @@ SEP = '###'
 def is_glob(text):
     return glob.escape(text) != text
 
+def increment_progress():
+    with progress.get_lock():
+        progress.value += 1
+
+def queue_try_put(que, val):
+    try:
+        que.put_nowait(val)
+    except queue.Full:
+        pass
 
 def import_symbol(symbol):
     parts = symbol.split('.')
@@ -89,20 +109,28 @@ def import_symbol(symbol):
     return (parts[-1], res)
 
 
+def format_context(ctx):
+    return f'context: {", ".join(map(repr, ctx))}'
+
 def call_guarded(ctx, f, *args, **kwargs):
     try:
         return f(*args, **kwargs)
     except Exception as exc:
-        ctx = f'context: {", ".join(map(repr, ctx))}'
+        ctx = format_context(ctx)
         raise UserError(f"{SEP} Error in {f.__name__}(): {exc} [{ctx}]") from exc
 
+def skip_command(ctx):
+    ctx = format_context(ctx)
+    increment_progress()
+    raise SkipCommand(f"{SEP} Skipped [{ctx}]")
 
 class Runner:
     
-    def __init__(self, command, expressions, dry_run, jobs, include_hidden, import_, silent, sort_alg_name, stop_at_error):
+    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, silent, sort_alg_name, stop_at_error):
         self._expressions = expressions
         self._dry_run = dry_run
         self._jobs = jobs
+        self.filters = filter_
         self._include_hidden = include_hidden
         self._import = import_
         self._silent = silent
@@ -131,8 +159,7 @@ class Runner:
                 printer.show_blue(f'{SEP} [progress: {progress.value} of {self._total}]', end='')
                 
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        with progress.get_lock():
-            progress.value += 1
+        increment_progress()
 
         with reserved_printer as printer:
             if not self._silent:
@@ -170,6 +197,10 @@ class Runner:
             **context_imports
         }
         
+        for f in self.filters:
+            if not call_guarded(product_item, eval, f, context_full):
+                skip_command(product_item)
+
         expr_vals = [call_guarded(product_item, eval, e, context_full) for e in self._expressions]
 
         context_exprs = {'e' + str(i): v for i, v in enumerate(expr_vals)}
@@ -195,21 +226,18 @@ class Runner:
         try:
             self._run_single(args)
         except CommandFailure as exc:
-            try:
-                err_queue.put_nowait(3)
-            except queue.Full:
-                pass
-            
+            queue_try_put(err_queue, EXIT_CODE.CMD_EXECUTION_ERROR)            
             if self._stop_at_error:
                 raise Terminate
+        except SkipCommand as exc:
+            if not self._silent:
+                with reserved_printer as printer:
+                    printer.clear_line()
+                    printer.show_yellow(exc)
         except UserError as exc:
             with reserved_printer as printer:
                 printer.show_red(exc)
-                sys.stderr.flush()
-            try:
-                err_queue.put_nowait(2)
-            except queue.Full:
-                pass
+            queue_try_put(err_queue, EXIT_CODE.CMD_GENERATION_ERROR)
             if self._stop_at_error:
                 raise Terminate
         
@@ -227,12 +255,9 @@ class Runner:
         except Terminate as exc:
             pass
 
-        try:
-            # it's better to put something into the queue,
-            # otherwise err_queue.get_nowait() could occassionaly raise queue.Empty
-            err_queue.put_nowait(0)
-        except queue.Full:
-            pass
+        # it's better to put something into the queue,
+        # otherwise err_queue.get_nowait() could occassionaly raise queue.Empty
+        queue_try_put(err_queue, EXIT_CODE.SUCCESS)
         
         try:
             exit_code = err_queue.get()

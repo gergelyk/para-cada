@@ -6,6 +6,7 @@ from cada.core import Runner
 @click.argument('expression', nargs=-1)
 @click.option('-d', '--dry-run', is_flag=True, help='Only show what would be executed.')
 @click.option('-j', '--jobs', type=int, help='Number of concurent jobs that will execute commands. 0 means `auto`.')
+@click.option('-f', '--filter', 'filter_', multiple=True, help='Filter expression.')
 @click.option('-H', '--include-hidden', is_flag=True, help='Glob expression includes files that starts with period.')
 @click.option('-i', '--import', 'import_', multiple=True, help='Import extra symbol used in user-defined expressions.')
 @click.option('-s', '--silent', is_flag=True, help='Do not print anything except stdout/stderr of the executed commands.')
