@@ -14,6 +14,7 @@ click = "^8.1.7"
 glob2 = "^0.7"
 colorama = "^0.4.6"
 natsort = "^8.4.0"
+humanize = "^4.9.0"
 
 
 [build-system]

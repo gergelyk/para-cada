@@ -9,9 +9,11 @@ from itertools import product
 from pathlib import Path
 from importlib import import_module
 from itertools import repeat
+from datetime import datetime as dt
 
 import glob2
 import natsort
+import humanize
 from colorama import Fore, Style
 
 class Terminate(Exception):
@@ -31,6 +33,136 @@ class EXIT_CODE:
     SUCCESS = 0
     CMD_GENERATION_ERROR = 2
     CMD_EXECUTION_ERROR = 3
+
+
+class StTime:
+    def __init__(self, ts_str):
+        self._ts = dt.fromtimestamp(ts_str)
+        
+    def __str__(self):
+        return self._ts.strftime("%Y-%m-%d")
+    
+    def __call__(self, fmt):
+        return self._ts.strftime(fmt)
+
+class StSize:
+    
+    def __init__(self, raw):
+        self._raw = raw
+        
+    def __str__(self):
+        return self.raw
+    
+    @property
+    def int(self):
+        return str(self._raw)
+    
+    @property
+    def nat(self):
+        return humanize.naturalsize(self._raw).replace(' ', '_')
+        
+    @property
+    def bin(self):
+        return humanize.naturalsize(self._raw, binary=True).replace(' ', '_')
+
+class StMode:
+    
+    def __init__(self, raw):
+        self._raw = raw
+        
+    def __str__(self):
+        return self.oct
+    
+    @property
+    def int(self):
+        return str(self._raw)
+
+    @property
+    def oct(self):
+        return str("{:03o}".format(self._raw))
+
+class XPath:
+    def __init__(self, path):
+        self._path = path
+
+    def __str__(self):
+        return str(self._path)
+
+    @property
+    def _raw(self):
+        return self._path.stat()
+
+    @property
+    def atime(self):
+        return StTime(self._raw.st_atime)
+
+    @property
+    def ctime(self):
+        return StTime(self._raw.st_ctime)
+    
+    @property
+    def mtime(self):
+        return StTime(self._raw.st_mtime)
+    
+    @property
+    def size(self):
+        return StSize(self._raw.st_size)
+
+    @property
+    def mode_full(self):
+        return StMode(self._raw.st_mode)
+    
+    @property
+    def mode(self):
+        return StMode(0o777 & self._raw.st_mode)
+    
+    @property
+    def owner(self):
+        return self._path.owner()
+    
+    @property
+    def group(self):
+        return self._path.group()
+    
+    @property
+    def is_dir(self):
+        return self._path.is_dir()
+    
+    @property
+    def is_file(self):
+        return self._path.is_file()
+    
+    @property
+    def is_symlink(self):
+        return self._path.is_symlink()
+    
+    @property
+    def link(self):
+        return XPath(self._path.readlink())
+    
+    @property
+    def name(self):
+        return self._path.name
+    
+    @property
+    def parent(self):
+        return XPath(self._path.parent)
+    
+    @property
+    def stem(self):
+        return self._path.stem
+    
+    @property
+    def suffix(self):
+        return self._path.suffix
+    
+    @property
+    def suffixes(self):
+        return ''.join(self._path.suffixes)
+    
+    @property
+    def absolute(self):
+        return XPath(self._path.absolute())
 
 class PrinterImpl:
 
@@ -180,22 +312,27 @@ class Runner:
         
         context_strings = {'s' + str(i): v for i, v in enumerate(product_dict.values())}
         context_paths = {'p' + str(i): Path(v) for i, v in enumerate(product_dict.values())}
+        context_stats = {'x' + str(i): XPath(Path(v)) for i, v in enumerate(product_dict.values())}
         if product_dict:
             context_strings['s'] = context_strings['s0']
             context_paths['p'] = context_paths['p0']
+            context_stats['x'] = context_stats['x0']
 
         context_full = {}
         
         # vars below cannot be pickled, therefore there they cannot be moved to __init__
-        context_common = {'re': re,
-                        'Path': Path,
-                        'sh': lambda cmd: subprocess.check_output(cmd.format(**context_full), shell=True).decode().splitlines()[0].strip()}
+        context_common = {
+            're': re,
+            'Path': Path,
+            'sh': lambda cmd: subprocess.check_output(cmd.format(**context_full), shell=True).decode().splitlines()[0].strip()            
+        }
         context_imports = dict(import_symbol(s) for s in self._import)
 
         context_full.update(
             **context_vars,
             **context_strings,
             **context_paths,
+            **context_stats,
             **context_common,
             **context_imports
         )
@@ -217,7 +354,7 @@ class Runner:
         else:
             default_arg = ()
 
-        context_formatting = {**context_vars, **context_strings, **context_paths, **context_exprs}
+        context_formatting = {**context_vars, **context_strings, **context_paths, **context_stats, **context_exprs}
         cmd_parts_expanded = [
             shlex.quote(product_dict[i]) if d else 
             call_guarded(product_item, p.format, *default_arg, **context_formatting)
