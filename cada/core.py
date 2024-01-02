@@ -26,9 +26,10 @@ class Printer:
         return self
     
     def __exit__(self, *args):
+        sys.stderr.flush()
         self._lock.release()
-        
-    def print(self, *args, **kwargs):
+
+    def show(self, *args, **kwargs):
         print(*args, file=sys.stderr, **kwargs)
 
 printer = Printer()
@@ -59,7 +60,7 @@ def run_in_dry_mode(cmd, progress, silent, show_progress):
     printe(Fore.BLUE + cmd + Style.RESET_ALL)
 
 def run_in_shell(cmd, progress, silent, show_progress):
-    echo = do_nothing if silent else printer.print
+    echo = do_nothing if silent else printer.show
     if show_progress:
         with printer:
             echo(Fore.BLUE + f'{cmd}  ### [progress: {progress}]%' + Style.RESET_ALL, end='')
@@ -73,7 +74,7 @@ def run_in_shell(cmd, progress, silent, show_progress):
         else:
             echo(Fore.GREEN + cmd + Style.RESET_ALL)
 
-        printer.print(proc.stdout.decode(), end='')
+        printer.show(proc.stdout.decode(), end='')
     
     if proc.returncode:
         raise CommandFailure(f'Command returned {proc.returncode}')
@@ -176,7 +177,7 @@ class Runner:
                 raise Terminate
         except UserError as exc:
             with printer:
-                printer.print(Fore.RED + str(exc) + Style.RESET_ALL)            
+                printer.show(Fore.RED + str(exc) + Style.RESET_ALL)            
                 sys.stderr.flush()
             try:
                 err_queue.put_nowait(2)
