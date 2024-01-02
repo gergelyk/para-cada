@@ -74,39 +74,6 @@ err_queue = mp.Queue(1)
 progress = mp.Value('I', 0)
 SEP = '###'
 
-
-def run_in_dry_mode(cmd, silent, show_curr_cmd, total):
-    with reserved_printer as printer:
-        printer.show_blue(cmd)
-
-
-def run_in_shell(cmd, silent, show_curr_cmd, total):
-
-    if not silent:
-        with reserved_printer as printer:
-            printer.clear_line()
-            if show_curr_cmd:
-                printer.show_blue(cmd + '  ', end='')
-            printer.show_blue(f'{SEP} [progress: {progress.value} of {total}]', end='')
-            
-    proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    with progress.get_lock():
-        progress.value += 1
-
-    with reserved_printer as printer:
-        if not silent:
-            printer.clear_line()
-            if proc.returncode:
-                printer.show_red(f"{cmd}  {SEP} [returned: {proc.returncode}]")
-            else:
-                printer.show_green(cmd)
-
-        printer.show(proc.stdout.decode(), end='')
-    
-    if proc.returncode:
-        raise CommandFailure(f'Command returned {proc.returncode}')
-
-
 def is_glob(text):
     return glob.escape(text) != text
 
@@ -140,7 +107,7 @@ class Runner:
         self._import = import_
         self._silent = silent
         self._stop_at_error = stop_at_error
-        self._executor = run_in_dry_mode if self._dry_run else run_in_shell
+        self._executor = self._run_in_dry_mode if self._dry_run else self._run_in_shell
         self._cmd_parts = shlex.split(command)
         self._glob_detections = list(map(is_glob, self._cmd_parts))
         self._glob_indices = [i for i, d in enumerate(self._glob_detections) if d]
@@ -148,6 +115,37 @@ class Runner:
         sort_alg = sort_algs[sort_alg_name]
         globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden)) for g in globs]
         self._globs_product = list(product(*globs_expanded))
+        self._total = len(self._globs_product)
+
+    def _run_in_dry_mode(self, cmd):
+        with reserved_printer as printer:
+            printer.show_blue(cmd)
+
+
+    def _run_in_shell(self, cmd):
+        if not self._silent:
+            with reserved_printer as printer:
+                printer.clear_line()
+                if self._jobs == None:
+                    printer.show_blue(cmd + '  ', end='')
+                printer.show_blue(f'{SEP} [progress: {progress.value} of {self._total}]', end='')
+                
+        proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        with progress.get_lock():
+            progress.value += 1
+
+        with reserved_printer as printer:
+            if not self._silent:
+                printer.clear_line()
+                if proc.returncode:
+                    printer.show_red(f"{cmd}  {SEP} [returned: {proc.returncode}]")
+                else:
+                    printer.show_green(cmd)
+
+            printer.show(proc.stdout.decode(), end='')
+        
+        if proc.returncode:
+            raise CommandFailure(f'Command returned {proc.returncode}')
 
     def _run_single(self, args):
         index, product_item = args
@@ -191,7 +189,7 @@ class Runner:
             call_guarded(product_item, p.format, *default_arg, **context_formatting)
             for i, (p, d) in enumerate(zip(self._cmd_parts, self._glob_detections))
         ]
-        self._executor(' '.join(cmd_parts_expanded), self._silent, self._jobs == None, len(self._globs_product))
+        self._executor(' '.join(cmd_parts_expanded))
 
     def _run_single_guarded(self, args):
         try:
