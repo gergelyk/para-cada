@@ -1,4 +1,3 @@
-import sys
 import re
 import glob
 import shlex
@@ -13,8 +12,10 @@ from datetime import datetime as dt
 
 import glob2
 import natsort
-import humanize
-from colorama import Fore, Style
+
+from cada.printer import ReservedPrinter
+from cada.xpath import XPath
+
 
 class Terminate(Exception):
     pass
@@ -33,174 +34,6 @@ class EXIT_CODE:
     SUCCESS = 0
     CMD_GENERATION_ERROR = 2
     CMD_EXECUTION_ERROR = 3
-
-
-class StTime:
-    def __init__(self, ts_str):
-        self._ts = dt.fromtimestamp(ts_str)
-        
-    def __str__(self):
-        return self._ts.strftime("%Y-%m-%d")
-    
-    def __call__(self, fmt):
-        return self._ts.strftime(fmt)
-
-class StSize:
-    
-    def __init__(self, raw):
-        self._raw = raw
-        
-    def __str__(self):
-        return self.raw
-    
-    @property
-    def int(self):
-        return str(self._raw)
-    
-    @property
-    def nat(self):
-        return humanize.naturalsize(self._raw).replace(' ', '_')
-        
-    @property
-    def bin(self):
-        return humanize.naturalsize(self._raw, binary=True).replace(' ', '_')
-
-class StMode:
-    
-    def __init__(self, raw):
-        self._raw = raw
-        
-    def __str__(self):
-        return self.oct
-    
-    @property
-    def int(self):
-        return str(self._raw)
-
-    @property
-    def oct(self):
-        return str("{:03o}".format(self._raw))
-
-class XPath:
-    def __init__(self, path):
-        self._path = path
-
-    def __str__(self):
-        return str(self._path)
-
-    @property
-    def _raw(self):
-        return self._path.stat()
-
-    @property
-    def atime(self):
-        return StTime(self._raw.st_atime)
-
-    @property
-    def ctime(self):
-        return StTime(self._raw.st_ctime)
-    
-    @property
-    def mtime(self):
-        return StTime(self._raw.st_mtime)
-    
-    @property
-    def size(self):
-        return StSize(self._raw.st_size)
-
-    @property
-    def mode_full(self):
-        return StMode(self._raw.st_mode)
-    
-    @property
-    def mode(self):
-        return StMode(0o777 & self._raw.st_mode)
-    
-    @property
-    def owner(self):
-        return self._path.owner()
-    
-    @property
-    def group(self):
-        return self._path.group()
-    
-    @property
-    def is_dir(self):
-        return self._path.is_dir()
-    
-    @property
-    def is_file(self):
-        return self._path.is_file()
-    
-    @property
-    def is_symlink(self):
-        return self._path.is_symlink()
-    
-    @property
-    def link(self):
-        return XPath(self._path.readlink())
-    
-    @property
-    def name(self):
-        return self._path.name
-    
-    @property
-    def parent(self):
-        return XPath(self._path.parent)
-    
-    @property
-    def stem(self):
-        return self._path.stem
-    
-    @property
-    def suffix(self):
-        return self._path.suffix
-    
-    @property
-    def suffixes(self):
-        return ''.join(self._path.suffixes)
-    
-    @property
-    def absolute(self):
-        return XPath(self._path.absolute())
-
-class PrinterImpl:
-
-    def show(self, *args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
-
-    def show_colored(self, color, *args, **kwargs):
-        self.show(*(color + str(a) + Style.RESET_ALL for a in args), **kwargs)
-        
-    def show_blue(self, *args, **kwargs):
-        self.show_colored(Fore.BLUE, *args, **kwargs)
-        
-    def show_green(self, *args, **kwargs):
-        self.show_colored(Fore.GREEN, *args, **kwargs)
-        
-    def show_red(self, *args, **kwargs):
-        self.show_colored(Fore.RED, *args, **kwargs)
-        
-    def show_yellow(self, *args, **kwargs):
-        self.show_colored(Fore.YELLOW, *args, **kwargs)
-
-    def clear_line(self):
-        """move caret to the begining and clear to the end of line"""
-        self.show("\r\033[K", end='')
-
-
-class ReservedPrinter:
-    def __init__(self):
-        self._lock = mp.Lock()
-        self._impl = PrinterImpl()
-        
-    def __enter__(self):
-        self._lock.acquire()
-        return self._impl
-    
-    def __exit__(self, *args):
-        sys.stderr.flush()
-        self._lock.release()
 
 
 reserved_printer = ReservedPrinter()
