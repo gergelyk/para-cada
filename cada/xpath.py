@@ -1,4 +1,5 @@
 import humanize
+from datetime import datetime as dt
 
 class StTime:
     def __init__(self, ts_str):
@@ -16,7 +17,7 @@ class StSize:
         self._raw = raw
         
     def __str__(self):
-        return self.raw
+        return str(self._raw)
     
     @property
     def int(self):
@@ -74,13 +75,13 @@ class XPath:
         return StSize(self._raw.st_size)
 
     @property
-    def mode_full(self):
-        return StMode(self._raw.st_mode)
-    
-    @property
     def mode(self):
         return StMode(0o777 & self._raw.st_mode)
-    
+
+    @property
+    def mode_full(self):
+        return StMode(self._raw.st_mode)
+
     @property
     def owner(self):
         return self._path.owner()

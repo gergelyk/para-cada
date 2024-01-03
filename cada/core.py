@@ -7,8 +7,6 @@ import multiprocessing as mp
 from itertools import product
 from pathlib import Path
 from importlib import import_module
-from itertools import repeat
-from datetime import datetime as dt
 
 import glob2
 import natsort
