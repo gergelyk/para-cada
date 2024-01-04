@@ -88,14 +88,15 @@ def skip_command(ctx):
 
 class Runner:
     
-    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, silent, sort_alg_name, stop_at_error):
+    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, stop_at_error):
         self._expressions = expressions
         self._dry_run = dry_run
         self._jobs = jobs
         self.filters = filter_
         self._include_hidden = include_hidden
         self._import = import_
-        self._silent = silent
+        self._quiet = quiet
+        self._color = (color == 'auto' and reserved_printer.is_tty) or (color == 'always')
         self._stop_at_error = stop_at_error
         self._executor = self._run_in_dry_mode if self._dry_run else self._run_in_shell
         self._cmd_parts = shlex.split(command)
@@ -106,6 +107,9 @@ class Runner:
         globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden)) for g in globs]
         self._globs_product = list(product(*globs_expanded))
         self._total = len(self._globs_product)
+        
+        if not self._color:
+            reserved_printer.set_monohrome()
 
     def _run_in_dry_mode(self, cmd):
         with reserved_printer as printer:
@@ -113,7 +117,7 @@ class Runner:
 
 
     def _run_in_shell(self, cmd):
-        if not self._silent:
+        if not self._quiet and reserved_printer.is_tty:
             with reserved_printer as printer:
                 printer.clear_line()
                 if self._jobs == None:
@@ -124,7 +128,7 @@ class Runner:
         increment_progress()
 
         with reserved_printer as printer:
-            if not self._silent:
+            if not self._quiet:
                 printer.clear_line()
                 if proc.returncode:
                     printer.show_red(f"{cmd}  {SEP} [returned: {proc.returncode}]")
@@ -132,6 +136,8 @@ class Runner:
                     printer.show_green(cmd)
 
             printer.show(proc.stdout.decode(), end='')
+            if (not self._quiet) and (not self._color):
+                printer.show('')
         
         if proc.returncode:
             raise CommandFailure(f'Command returned {proc.returncode}')
@@ -201,7 +207,7 @@ class Runner:
             if self._stop_at_error:
                 raise Terminate
         except SkipCommand as exc:
-            if not self._silent:
+            if not self._quiet:
                 with reserved_printer as printer:
                     printer.clear_line()
                     printer.show_yellow(exc)

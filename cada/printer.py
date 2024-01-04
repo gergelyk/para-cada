@@ -6,8 +6,12 @@ class PrinterImpl:
 
     def __init__(self):
         self.stream = sys.stderr
-        if not self.stream.isatty():
-            self.show_colored = self.show_monohrome
+        self.is_tty = self.stream.isatty()
+        if not self.is_tty:
+            self.clear_line = lambda: None
+
+    def set_monohrome(self):
+        self.show_colored = self.show_monohrome
 
     def show(self, *args, **kwargs):
         print(*args, file=self.stream, **kwargs)
@@ -39,7 +43,14 @@ class ReservedPrinter:
     def __init__(self):
         self._lock = mp.Lock()
         self._impl = PrinterImpl()
-        
+    
+    @property
+    def is_tty(self):
+        return self._impl.is_tty
+
+    def set_monohrome(self):
+        self._impl.set_monohrome()
+
     def __enter__(self):
         self._lock.acquire()
         return self._impl

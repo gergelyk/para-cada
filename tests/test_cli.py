@@ -19,7 +19,7 @@ def test_dry_run_ls():
     assert out == ['ls bar.txt', 'ls baz.txt', 'ls foo.txt']
 
 def test_real_run_ls():
-    out = sh("""cada 'ls *' -s""")
+    out = sh("""cada 'ls *' -q""")
     assert out == ['bar.txt', 'baz.txt', 'foo.txt']
     
 def test_index():
@@ -31,11 +31,11 @@ def test_extra_expression():
     assert out == ['mv bar.txt 10', 'mv baz.txt 11', 'mv foo.txt 12']
     
 def test_filter():
-    out = sh("""cada 'rm *' -f 's.startswith("ba")' -ds""")
+    out = sh("""cada 'rm *' -f 's.startswith("ba")' -dq""")
     assert out == ['rm bar.txt', 'rm baz.txt']
 
 def test_two_filters():
-    out = sh("""cada 'rm *' -f 's.startswith("ba")' -f 'p.stem.endswith("r")' -ds""")
+    out = sh("""cada 'rm *' -f 's.startswith("ba")' -f 'p.stem.endswith("r")' -dq""")
     assert out == ['rm bar.txt']
 
 def test_string_var():
