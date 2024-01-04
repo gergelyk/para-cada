@@ -33,6 +33,22 @@ class EXIT_CODE:
     CMD_GENERATION_ERROR = 2
     CMD_EXECUTION_ERROR = 3
 
+class Index(int):
+    
+    @property
+    def qual(self):
+        try:
+            return self._qual
+        except AttributeError:
+            raise NotImplementedError("'qual' is not available in multi-processing mode")
+
+    @qual.setter
+    def qual(self, value):
+        self._qual = value
+    
+    @property
+    def total(self):
+        return self
 
 reserved_printer = ReservedPrinter()
 
@@ -107,6 +123,7 @@ class Runner:
         globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden)) for g in globs]
         self._globs_product = list(product(*globs_expanded))
         self._total = len(self._globs_product)
+        self._skipped_number = 0
         
         if not self._color:
             reserved_printer.set_monohrome()
@@ -120,7 +137,7 @@ class Runner:
         if not self._quiet and reserved_printer.is_tty:
             with reserved_printer as printer:
                 printer.clear_line()
-                if self._jobs == None:
+                if self._jobs is None:
                     printer.show_blue(cmd + '  ', end='')
                 printer.show_blue(f'{SEP} [progress: {progress.value} of {self._total}]', end='')
                 
@@ -143,7 +160,11 @@ class Runner:
             raise CommandFailure(f'Command returned {proc.returncode}')
 
     def _run_single(self, args):
-        index, product_item = args
+        index_int, product_item = args
+        index = Index(index_int)
+        if self._jobs is None:
+            index.qual = index_int - self._skipped_number
+            
         context_vars = {'i': index}
         product_dict = dict(zip(self._glob_indices, product_item))
         
@@ -207,6 +228,7 @@ class Runner:
             if self._stop_at_error:
                 raise Terminate
         except SkipCommand as exc:
+            self._skipped_number += 1
             if not self._quiet:
                 with reserved_printer as printer:
                     printer.clear_line()
