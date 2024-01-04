@@ -34,7 +34,11 @@ class EXIT_CODE:
     CMD_EXECUTION_ERROR = 3
 
 class Index(int):
-    
+
+    @property
+    def every(self):
+        return int(self)
+
     @property
     def qual(self):
         try:
@@ -48,7 +52,11 @@ class Index(int):
     
     @property
     def total(self):
-        return self
+        return self._total
+
+    @total.setter
+    def total(self, value):
+        self._total = value
 
 reserved_printer = ReservedPrinter()
 
@@ -161,11 +169,14 @@ class Runner:
 
     def _run_single(self, args):
         index_int, product_item = args
-        index = Index(index_int)
+        index0 = Index(index_int)
+        index = Index(index_int + 1)
+        index.total = index0.total = self._total
         if self._jobs is None:
-            index.qual = index_int - self._skipped_number
+            index0.qual = index0 - self._skipped_number
+            index.qual = index - self._skipped_number
             
-        context_vars = {'i': index}
+        context_vars = {'i': index, 'i0': index0}
         product_dict = dict(zip(self._glob_indices, product_item))
         
         context_strings = {'s' + str(i): v for i, v in enumerate(product_dict.values())}
