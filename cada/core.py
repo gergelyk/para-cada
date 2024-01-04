@@ -61,10 +61,10 @@ class Index(int):
 reserved_printer = ReservedPrinter()
 
 sort_algs = {
-    'none': lambda x: x,
-    'simple': lambda x: sorted(x),
-    'natural': lambda x: natsort.natsorted(x),
-    'natural-ignore-case': lambda x: natsort.natsorted(x, alg=natsort.ns.IGNORECASE),
+    'none': lambda x, r: reversed(x) if r else x,
+    'simple': lambda x, r: sorted(x, reverse=r),
+    'natural': lambda x, r: natsort.natsorted(x, reverse=r),
+    'natural-ignore-case': lambda x, r: natsort.natsorted(x, alg=natsort.ns.IGNORECASE, reverse=r),
 }
 
 err_queue = mp.Queue(1)
@@ -112,7 +112,7 @@ def skip_command(ctx):
 
 class Runner:
     
-    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, stop_at_error):
+    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, reverse, stop_at_error):
         self._expressions = expressions
         self._dry_run = dry_run
         self._jobs = jobs
@@ -128,7 +128,7 @@ class Runner:
         self._glob_indices = [i for i, d in enumerate(self._glob_detections) if d]
         globs = [p for p, d in zip(self._cmd_parts, self._glob_detections) if d]
         sort_alg = sort_algs[sort_alg_name]
-        globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden)) for g in globs]
+        globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden), reverse) for g in globs]
         self._globs_product = list(product(*globs_expanded))
         self._total = len(self._globs_product)
         self._skipped_number = 0
