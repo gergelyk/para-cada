@@ -8,9 +8,9 @@ from itertools import product
 from pathlib import Path
 from importlib import import_module
 
-import click
 import glob2
 import natsort
+from click import ClickException
 
 from cada.printer import ReservedPrinter
 from cada.xpath import XPath
@@ -87,13 +87,16 @@ def queue_try_put(que, val):
         pass
 
 def import_symbol(symbol):
-    parts = symbol.split('.')
-    mod_name = parts[0]
-    attr_names = parts[1:]
-    mod = import_module(mod_name)
-    res = mod
-    for a in attr_names:
-        res = getattr(res, a)
+    try:
+        parts = symbol.split('.')
+        mod_name = parts[0]
+        attr_names = parts[1:]
+        mod = import_module(mod_name)
+        res = mod
+        for a in attr_names:
+            res = getattr(res, a)
+    except Exception as exc:
+        raise ClickException(f"Cannot import {symbol!r}: {exc}") from exc
     return (parts[-1], res)
 
 
@@ -135,7 +138,7 @@ class Runner:
             sort_key_outer = None
         else:
             if sort_alg_name != 'simple':
-                raise click.ClickException('--sort-key is supported only with --sort-alg=simple')
+                raise ClickException('--sort-key is supported only with --sort-alg=simple')
             sort_key_inner = eval('lambda s, p, x: ' + sort_key)
             sort_key_outer = lambda s: sort_key_inner(s, Path(s), XPath(s))
         
