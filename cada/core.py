@@ -14,7 +14,7 @@ import natsort
 
 from cada.printer import ReservedPrinter
 from cada.xpath import XPath
-
+from cada.addons import plugins, symbols, LazyLocals, load_startup_module
 
 class Terminate(Exception):
     pass
@@ -143,6 +143,8 @@ class Runner:
         self._total = len(self._globs_product)
         self._skipped_number = 0
         
+        load_startup_module()
+        
         if not self._color:
             reserved_printer.set_monohrome()
 
@@ -189,6 +191,8 @@ class Runner:
         context_vars = {'i': index, 'i0': index0}
         product_dict = dict(zip(self._glob_indices, product_item))
         
+        plugins_instance = plugins.get_instance(tuple(product_dict.values()))
+        lazy_plugins_instance = LazyLocals(plugins_instance)
         context_strings = {'s' + str(i): v for i, v in enumerate(product_dict.values())}
         context_paths = {'p' + str(i): Path(v) for i, v in enumerate(product_dict.values())}
         context_stats = {'x' + str(i): XPath(v) for i, v in enumerate(product_dict.values())}
@@ -208,6 +212,7 @@ class Runner:
         context_imports = dict(import_symbol(s) for s in self._import)
 
         context_full.update(
+            **symbols,
             **context_vars,
             **context_strings,
             **context_paths,
@@ -217,10 +222,10 @@ class Runner:
         )
 
         for f in self.filters:
-            if not call_guarded(product_item, eval, f, context_full):
+            if not call_guarded(product_item, eval, f, context_full, lazy_plugins_instance):
                 skip_command(product_item)
 
-        expr_vals = [call_guarded(product_item, eval, e, context_full) for e in self._expressions]
+        expr_vals = [call_guarded(product_item, eval, e, context_full, lazy_plugins_instance) for e in self._expressions]
 
         context_exprs = {'e' + str(i): v for i, v in enumerate(expr_vals)}
         if expr_vals:
@@ -233,7 +238,7 @@ class Runner:
         else:
             default_arg = ()
 
-        context_formatting = {**context_vars, **context_strings, **context_paths, **context_stats, **context_exprs}
+        context_formatting = {**symbols, **plugins_instance, **context_vars, **context_strings, **context_paths, **context_stats, **context_exprs}
         cmd_parts_expanded = [
             shlex.quote(product_dict[i]) if d else 
             call_guarded(product_item, p.format, *default_arg, **context_formatting)
