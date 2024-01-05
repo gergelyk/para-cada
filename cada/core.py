@@ -70,7 +70,8 @@ sort_algs = {
 
 err_queue = mp.Queue(1)
 progress = mp.Value('I', 0)
-SEP = '###'
+CMD_SEP = '###'
+CMD_PREFIX = '$ '
 
 def is_glob(text):
     return glob.escape(text) != text
@@ -104,12 +105,12 @@ def call_guarded(ctx, f, *args, **kwargs):
         return f(*args, **kwargs)
     except Exception as exc:
         ctx = format_context(ctx)
-        raise UserError(f"{SEP} Error in {f.__name__}(): {exc} [{ctx}]") from exc
+        raise UserError(f"{CMD_SEP} Error in {f.__name__}(): {exc} [{ctx}]") from exc
 
 def skip_command(ctx):
     ctx = format_context(ctx)
     increment_progress()
-    raise SkipCommand(f"{SEP} Skipped [{ctx}]")
+    raise SkipCommand(f"{CMD_SEP} Skipped [{ctx}]")
 
 class Runner:
     
@@ -150,7 +151,7 @@ class Runner:
 
     def _run_in_dry_mode(self, cmd):
         with reserved_printer as printer:
-            printer.show_blue(cmd)
+            printer.show_blue(CMD_PREFIX + cmd)
 
 
     def _run_in_shell(self, cmd):
@@ -158,8 +159,8 @@ class Runner:
             with reserved_printer as printer:
                 printer.clear_line()
                 if self._jobs is None:
-                    printer.show_blue(cmd + '  ', end='')
-                printer.show_blue(f'{SEP} [progress: {progress.value} of {self._total}]', end='')
+                    printer.show_blue(CMD_PREFIX + cmd + '  ', end='')
+                printer.show_blue(f'{CMD_SEP} [progress: {progress.value} of {self._total}]', end='')
                 
         proc = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         increment_progress()
@@ -168,13 +169,11 @@ class Runner:
             if not self._quiet:
                 printer.clear_line()
                 if proc.returncode:
-                    printer.show_red(f"{cmd}  {SEP} [returned: {proc.returncode}]")
+                    printer.show_red(f"{CMD_PREFIX}{cmd}  {CMD_SEP} [returned: {proc.returncode}]")
                 else:
-                    printer.show_green(cmd)
+                    printer.show_green(CMD_PREFIX + cmd)
 
             printer.show(proc.stdout.decode(), end='')
-            if (not self._quiet) and (not self._color):
-                printer.show('')
         
         if proc.returncode:
             raise CommandFailure(f'Command returned {proc.returncode}')
