@@ -1,9 +1,10 @@
 import click
+from click_help_colors import HelpColorsGroup, HelpColorsCommand
 from cada.core import Runner
 
 PROG_NAME = 'cada'
 
-@click.command(name=PROG_NAME, context_settings=dict(show_default=True, help_option_names=["-h", "--help"]))
+@click.command(cls=HelpColorsCommand, help_headers_color='yellow', help_options_color='blue', name=PROG_NAME, context_settings=dict(show_default=True, help_option_names=["-h", "--help"]))
 @click.argument('command')
 @click.argument('expression', nargs=-1)
 @click.option('-d', '--dry-run', is_flag=True, help='Only show what would be executed.')
