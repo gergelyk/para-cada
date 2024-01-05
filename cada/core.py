@@ -8,6 +8,7 @@ from itertools import product
 from pathlib import Path
 from importlib import import_module
 
+import click
 import glob2
 import natsort
 
@@ -61,10 +62,10 @@ class Index(int):
 reserved_printer = ReservedPrinter()
 
 sort_algs = {
-    'none': lambda x, r: reversed(x) if r else x,
-    'simple': lambda x, r: sorted(x, reverse=r),
-    'natural': lambda x, r: natsort.natsorted(x, reverse=r),
-    'natural-ignore-case': lambda x, r: natsort.natsorted(x, alg=natsort.ns.IGNORECASE, reverse=r),
+    'none': lambda x, r, k: reversed(x) if r else x,
+    'simple': lambda x, r, k: sorted(x, reverse=r, key=k),
+    'natural': lambda x, r, k: natsort.natsorted(x, reverse=r, key=k),
+    'natural-ignore-case': lambda x, r, k: natsort.natsorted(x, alg=natsort.ns.IGNORECASE, reverse=r, key=k),
 }
 
 err_queue = mp.Queue(1)
@@ -112,7 +113,7 @@ def skip_command(ctx):
 
 class Runner:
     
-    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, reverse, stop_at_error):
+    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, sort_key, reverse, stop_at_error):
         self._expressions = expressions
         self._dry_run = dry_run
         self._jobs = jobs
@@ -128,7 +129,16 @@ class Runner:
         self._glob_indices = [i for i, d in enumerate(self._glob_detections) if d]
         globs = [p for p, d in zip(self._cmd_parts, self._glob_detections) if d]
         sort_alg = sort_algs[sort_alg_name]
-        globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden), reverse) for g in globs]
+        
+        if sort_key is None:
+            sort_key_outer = None
+        else:
+            if sort_alg_name != 'simple':
+                raise click.ClickException('--sort-key is supported only with --sort-alg=simple')
+            sort_key_inner = eval('lambda s, p, x: ' + sort_key)
+            sort_key_outer = lambda s: sort_key_inner(s, Path(s), XPath(s))
+        
+        globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden), reverse, sort_key_outer) for g in globs]
         self._globs_product = list(product(*globs_expanded))
         self._total = len(self._globs_product)
         self._skipped_number = 0
@@ -181,7 +191,7 @@ class Runner:
         
         context_strings = {'s' + str(i): v for i, v in enumerate(product_dict.values())}
         context_paths = {'p' + str(i): Path(v) for i, v in enumerate(product_dict.values())}
-        context_stats = {'x' + str(i): XPath(Path(v)) for i, v in enumerate(product_dict.values())}
+        context_stats = {'x' + str(i): XPath(v) for i, v in enumerate(product_dict.values())}
         if product_dict:
             context_strings['s'] = context_strings['s0']
             context_paths['p'] = context_paths['p0']

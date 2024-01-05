@@ -1,6 +1,10 @@
 import humanize
 from datetime import datetime as dt
+from pathlib import Path
+from functools import total_ordering
 
+
+@total_ordering
 class StTime:
     def __init__(self, ts_str):
         self._ts = dt.fromtimestamp(ts_str)
@@ -11,6 +15,14 @@ class StTime:
     def __call__(self, fmt):
         return self._ts.strftime(fmt)
 
+    def __eq__(self, other):
+        return self._ts == other._ts
+
+    def __lt__(self, other):
+        return self._ts < other._ts
+
+
+@total_ordering
 class StSize:
     
     def __init__(self, raw):
@@ -31,6 +43,13 @@ class StSize:
     def bin(self):
         return humanize.naturalsize(self._raw, binary=True).replace(' ', '_')
 
+    def __eq__(self, other):
+        return self._raw == other._raw
+
+    def __lt__(self, other):
+        return self._raw < other._raw
+
+
 class StMode:
     
     def __init__(self, raw):
@@ -47,9 +66,10 @@ class StMode:
     def oct(self):
         return str("{:03o}".format(self._raw))
 
+
 class XPath:
     def __init__(self, path):
-        self._path = path
+        self._path = Path(path)
 
     def __str__(self):
         return str(self._path)

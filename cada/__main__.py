@@ -13,6 +13,7 @@ PROG_NAME = 'cada'
 @click.option('-i', '--import', 'import_', multiple=True, help='Import extra symbol used in user-defined expressions.')
 @click.option('-q', '--quiet', is_flag=True, help='Do not print anything except stdout/stderr of the executed commands.')
 @click.option('-s', '--sort-alg', 'sort_alg_name', type=click.Choice(['none', 'simple', 'natural', 'natural-ignore-case']), default='natural-ignore-case', help='Determines execution order.')
+@click.option('-k', '--sort-key', help='Expression describing a key for sorting.')
 @click.option('-r', '--reverse', is_flag=True, help='Reverse processing order.')
 @click.option('-x', '--stop-at-error', is_flag=True, help='Terminates at the first command that returns code other than 0.')
 @click.option('--color', type=click.Choice(['always', 'auto', 'never']), default='auto', help='When to use terminal colours.')
