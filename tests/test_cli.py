@@ -24,11 +24,23 @@ def test_real_run_ls():
     
 def test_index():
     out = sh("""cada 'mv * {i}' -d""")
+    assert out == ['mv bar.txt 1', 'mv baz.txt 2', 'mv foo.txt 3']
+
+def test_index0():
+    out = sh("""cada 'mv * {i0}' -d""")
     assert out == ['mv bar.txt 0', 'mv baz.txt 1', 'mv foo.txt 2']
+
+def test_index_reversed():
+    out = sh("""cada 'mv * {i}' -rd""")
+    assert out == ['mv foo.txt 1', 'mv baz.txt 2', 'mv bar.txt 3']
+    
+def test_index_with_sort_key():
+    out = sh("""cada 'mv * {i}' -k "s[2]" -s 'simple' -d""")
+    assert out == ['mv foo.txt 1', 'mv bar.txt 2', 'mv baz.txt 3']
 
 def test_extra_expression():
     out = sh("""cada 'mv * {}' 'i+10' -d""")
-    assert out == ['mv bar.txt 10', 'mv baz.txt 11', 'mv foo.txt 12']
+    assert out == ['mv bar.txt 11', 'mv baz.txt 12', 'mv foo.txt 13']
     
 def test_filter():
     out = sh("""cada 'rm *' -f 's.startswith("ba")' -dq""")
