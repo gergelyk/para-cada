@@ -117,8 +117,8 @@ def skip_command(ctx):
 
 class Runner:
     
-    def __init__(self, command, expressions, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, sort_key, reverse, stop_at_error):
-        self._expressions = expressions
+    def __init__(self, command_expr, eval_expr, dry_run, jobs, filter_, include_hidden, import_, color, quiet, sort_alg_name, sort_key, reverse, stop_at_error):
+        self._eval_expressions = eval_expr
         self._dry_run = dry_run
         self._jobs = jobs
         self.filters = filter_
@@ -128,7 +128,7 @@ class Runner:
         self._color = (color == 'auto' and reserved_printer.is_tty) or (color == 'always')
         self._stop_at_error = stop_at_error
         self._executor = self._run_in_dry_mode if self._dry_run else self._run_in_shell
-        self._cmd_parts = shlex.split(command)
+        self._cmd_parts = shlex.split(command_expr)
         self._glob_detections = list(map(is_glob, self._cmd_parts))
         self._glob_indices = [i for i, d in enumerate(self._glob_detections) if d]
         globs = [p for p, d in zip(self._cmd_parts, self._glob_detections) if d]
@@ -227,7 +227,7 @@ class Runner:
             if not call_guarded(product_item, eval, f, context_full, lazy_plugins_instance):
                 skip_command(product_item)
 
-        expr_vals = [call_guarded(product_item, eval, e, context_full, lazy_plugins_instance) for e in self._expressions]
+        expr_vals = [call_guarded(product_item, eval, e, context_full, lazy_plugins_instance) for e in self._eval_expressions]
 
         context_exprs = {'e' + str(i): v for i, v in enumerate(expr_vals)}
         if expr_vals:
