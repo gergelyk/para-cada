@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from importlib import import_module
@@ -6,7 +7,8 @@ STARTUP_FILENAME = 'startup.py'
 
 def load_startup_module():
     from cada.__main__ import PROG_NAME
-    config_dir = Path().home() / ('.' + PROG_NAME)
+    config_dir_default = Path().home() / ('.' + PROG_NAME)
+    config_dir = Path(os.getenv('CADA_CONFIG_DIR', config_dir_default))
     startup_path = config_dir / STARTUP_FILENAME
     if startup_path.exists():
         sys.path.insert(0, str(config_dir))
