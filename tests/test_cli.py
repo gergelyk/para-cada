@@ -75,5 +75,5 @@ def test_sh():
 
 def test_addons():
     os.environ['CADA_CONFIG_DIR'] = '../addons'
-    out = sh("""cada 'mv *.txt {s}.{e}' 'hashlib.md5(c).hexdigest()' -i hashlib -d""")
+    out = sh("""cada 'mv *.txt {s}.{e}' 'md5(c)' -d""")
     assert out == ['mv bar.txt bar.txt.614dd0e977becb4c6f7fa99e64549b12', 'mv baz.txt baz.txt.7bf20d8965c6940c058380b43275e552', 'mv foo.txt foo.txt.0bee89b07a248e27c83fc3d5951213c1']
