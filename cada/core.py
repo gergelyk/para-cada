@@ -139,7 +139,7 @@ class Runner:
         else:
             if sort_alg_name != 'simple':
                 raise ClickException('--sort-key is supported only with --sort-alg=simple')
-            sort_key_inner = eval('lambda s, p, x: ' + sort_key)
+            sort_key_inner = eval('lambda s, p, x: ' + sort_key, {}, {})
             sort_key_outer = lambda s: sort_key_inner(s, Path(s), XPath(s))
         
         globs_expanded = [sort_alg(glob2.glob(g, include_hidden=self._include_hidden), reverse, sort_key_outer) for g in globs]
