@@ -154,8 +154,7 @@ class Runner:
 
     def _run_in_dry_mode(self, cmd):
         with reserved_printer as printer:
-            printer.show_blue(CMD_PREFIX + cmd)
-
+            printer.show_blue(cmd)
 
     def _run_in_shell(self, cmd):
         if not self._quiet and reserved_printer.is_tty:
