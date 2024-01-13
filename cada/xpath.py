@@ -4,6 +4,19 @@ from pathlib import Path
 from functools import total_ordering
 
 
+def cast_to_dt(obj):
+    if isinstance(obj, str):
+        try:
+            obj = dt.strptime(obj, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                obj = dt.strptime(obj, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError(f'Cannot parse {obj!r} as datetime') from None
+    elif isinstance(obj, StTime):
+        return obj._ts
+    return obj
+
 @total_ordering
 class StTime:
     def __init__(self, ts_str):
@@ -16,55 +29,40 @@ class StTime:
         return self._ts.strftime(fmt)
 
     def __eq__(self, other):
-        return self._ts == other._ts
+        return self._ts == cast_to_dt(other)
 
     def __lt__(self, other):
-        return self._ts < other._ts
+        return self._ts < cast_to_dt(other)
 
 
 @total_ordering
-class StSize:
-    
-    def __init__(self, raw):
-        self._raw = raw
-        
-    def __str__(self):
-        return str(self._raw)
-    
+class StSize(int):
+
     @property
     def int(self):
-        return str(self._raw)
-    
+        return int(self)
+
     @property
     def nat(self):
-        return humanize.naturalsize(self._raw).replace(' ', '_')
+        return humanize.naturalsize(self).replace(' ', '_')
         
     @property
     def bin(self):
-        return humanize.naturalsize(self._raw, binary=True).replace(' ', '_')
-
-    def __eq__(self, other):
-        return self._raw == other._raw
-
-    def __lt__(self, other):
-        return self._raw < other._raw
+        return humanize.naturalsize(self, binary=True).replace(' ', '_')
 
 
-class StMode:
-    
-    def __init__(self, raw):
-        self._raw = raw
+class StMode(int):
         
     def __str__(self):
         return self.oct
     
     @property
     def int(self):
-        return str(self._raw)
+        return int(self)
 
     @property
     def oct(self):
-        return str("{:03o}".format(self._raw))
+        return str("{:03o}".format(self))
 
 
 class XPath:
