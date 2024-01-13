@@ -41,7 +41,8 @@ cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' \
 
 # set executable attribute to the files with a shebang
 # and remove it from remaining files
-cada 'chmod {}x **/*' '"-+"[p.open("rb").read(2) == b"#!"]' -f x.is_file
+cada 'chmod {}x **/*' '"-+"[p.open("rb").read(2) == b"#!"]' \
+    -f x.is_file
 
 # put your images in subdirectories according to their creation date
 cada 'mkdir -p {} && mv *.jpg {}' x.ctime
