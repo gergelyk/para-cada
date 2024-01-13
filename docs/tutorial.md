@@ -156,6 +156,23 @@ mv bar.txt bar.txt.d41d8cd98f00b204e9800998ecf8427e
 mv foo.txt foo.txt.d41d8cd98f00b204e9800998ecf8427e
 ```
 
+Modules from CWD can be imported too. This way we can define multi-line code:
+```py
+# checksum.py
+import hashlib
+
+def md5(p):
+    content = p.read_bytes()
+    chksum = hashlib.md5(content)
+    return chksum.hexdigest()
+```
+
+```sh
+$ cada 'mv *.txt {s}.{e}' 'md5(p)' -i checksum.md5 -d
+mv bar.txt bar.txt.d41d8cd98f00b204e9800998ecf8427e
+mv foo.txt foo.txt.d41d8cd98f00b204e9800998ecf8427e
+```
+
 Cada also supports plugins that can you can use to define your own symbols and references. This will be covered in a separate chapter.
 
 ## Filter Expressions
