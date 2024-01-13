@@ -5,7 +5,8 @@ description = "Executes your command for each file selected using glob expressio
 authors = ["Grzegorz Krason <grzegorz.krason@gmail.com>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/gergelyk/para-cada"
+homepage = "https://gergelyk.github.io/para-cada"
+repository = "https://github.com/gergelyk/para-cada"
 packages = [{include = "cada"}]
 
 [tool.poetry.dependencies]

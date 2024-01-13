@@ -1,4 +1,7 @@
-## Examples
+---
+title: Para Cada
+description: Examples
+---
 
 It is recommended to run examples below in the *dry mode*, by adding `-d` flag. This way you will only simulate what would happen without actually applying any changes to the filesystem.
 
