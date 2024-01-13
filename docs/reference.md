@@ -16,6 +16,7 @@ description: Reference
 | e0, e1, ..., e(*M*-1) | XPath    | EFC          | Text         |
 | i                     | Index    | EFC          |  |
 | i0                    | Index    | EFC          |  |
+| *user-defined*        | *custom* | EFC          |  |
 | sh                    | function | EF           |  |
 | re                    | module   | EF           | [Lib/re](https://docs.python.org/3/library/re.html)
 | Path                  | type     | EF           | [Lib/pathlib.Path](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

@@ -1,3 +1,5 @@
+import os
+import sys
 import re
 import glob
 import shlex
@@ -15,6 +17,9 @@ from click import ClickException
 from cada.printer import ReservedPrinter
 from cada.xpath import XPath
 from cada.addons import plugins, symbols, LazyLocals, load_startup_module
+
+# allow to import user-defined modules from CWD
+sys.path.insert(0, os.getcwd())
 
 class Terminate(Exception):
     pass
