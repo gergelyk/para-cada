@@ -29,6 +29,9 @@ cada 'mv * {}.d' -f x.is_dir
 # print filenames where stem is shorter than 3 characters
 cada 'echo *' -f 'len(p.stem) < 5' -s
 
+# remove files from given range of time
+cada 'rm *' -f '"2024-01-01" < x.ctime < "2024-01-10 12:10:00"'
+
 # to each `.tar` file add a suffix that represents MD5 sum calculated over the file content
 cada 'mv *.tar {s}.{e}' 'hashlib.md5(p.read_bytes()).hexdigest()' -i hashlib
 
