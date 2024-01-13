@@ -1,0 +1,24 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+#banner {
+  background: #FF9C00;
+  
+  .button {
+    border: 1px solid #FF8C00;
+    background: linear-gradient(rgb(255, 156, 00), rgb(255, 130, 00));
+    background-color: #FF9C00;
+    &:hover {
+      background: linear-gradient(rgb(255, 145, 00), rgb(255, 170, 00));
+      background-color: #FF9C00;
+    }
+  }
+}
+
+.language-plaintext {
+  color: #555;
+  background: #DDD;
+  text-shadow: 0px 1px 0px #eee;
+}
