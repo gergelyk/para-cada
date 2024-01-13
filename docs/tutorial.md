@@ -139,7 +139,7 @@ There is one more aid in *Command Expression* defined for your convenience. This
 
 Note: Before applying `str.format()` function, cada splits *Command Expression* into parts using `shlex.split()`. Function `str.format()` is applied to each part independently.
 
-Some of the commonly used symbols, like `Path` are immediately available within *Eval Expressions*:
+Some of the commonly used [symbols](reference.html#symbols), like `Path` are immediately available within *Eval Expressions*:
 
 ```sh
 $ cada 'mv *.txt {}' 'Path(s.title()).with_suffix(x.suffix)' -d
@@ -189,7 +189,7 @@ chmod +x script2
 ### Skipped [context: 'spam.md']
 ```
 
-Variables `i` and `i0` have special attributes to specify which of the files should be counted. For instance `i.qual` doesn't increment at the items that are skipped. Note that this attribute is not available in concurrent processing mode (with `-j` option). Check documentation for more details.
+Variables `i` and `i0` have special attributes to specify which of the files should be counted. For instance `i.qual` doesn't increment at the items that are skipped. Note that this attribute is not available in concurrent processing mode (with `-j` option). Check [documentation](reference.html#index) for more details.
 
 ```sh
 $ cada 'mv * file_{i.qual}' -f 'x.suffix != ".bkp"' -dq
@@ -277,7 +277,3 @@ mv bar.txt bar.txt.d41d8cd98f00b204e9800998ecf8427e
 mv foo.txt foo.txt.d41d8cd98f00b204e9800998ecf8427e
 ```
 
-
-TODO: link to XPath
-TODO: link to symbols (re, Path etc).
-TODO: documentation i.qual
