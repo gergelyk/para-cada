@@ -53,7 +53,7 @@ vim script
 sh script  
 ```
 
-Note that glob expression in the example above has been changed to `*.*`. This way `script` itself is not uploaded. Of course any other glob expressions are allowed here. Cada uses [`glob2`](https://pypi.org/project/glob2/) module to expand them. Check `cada --help` for more options that affect expansion.
+Note that glob expression in the example above has been changed to `*.*`. This way `script` itself is not uploaded. Of course any other glob expressions are allowed here. Cada uses [glob2](https://pypi.org/project/glob2/) module to expand them. Check `cada --help` for more options that affect expansion.
 
 Another useful option is `-x`. It stops processing as soon as any command fails (exits with the code other than 0).
 
@@ -100,7 +100,7 @@ Beside `p`, `p0`, `p1`..., there is also `s`, `s0`, `s1`..., and `x`, `x0`, `x1`
 
 Those `s` are `str` objects corresponding to the same filenames as `p`. They don't have significant meaning in *Command Expressions*, but we will see them later in this tutorial.
 
-Those `x` in turn are objects of [`XPath`](reference.html#xpath) class. Essentially this is `Path` class where methods has been replaced by properties, so that they can be used in the *Command Expressions*. Note that this `XPath` has nothing to do with [this](https://en.wikipedia.org/wiki/XPath) one. Sample usage:
+Those `x` in turn are objects of [XPath](reference.html#xpath) class. Essentially this is `Path` class where methods has been replaced by properties, so that they can be used in the *Command Expressions*. Note that this `XPath` has nothing to do with [this](https://en.wikipedia.org/wiki/XPath) one. Sample usage:
 
 ```sh
 $ cada 'mv *.txt {x.stem}_by_{x.owner}{x.suffix}' -d

@@ -241,11 +241,11 @@ class Runner:
 
         context_formatting = {**symbols, **plugins_instance, **context_vars, **context_strings, **context_paths, **context_stats, **context_exprs}
         cmd_parts_expanded = [
-            shlex.quote(product_dict[i]) if d else 
+            product_dict[i] if d else 
             call_guarded(product_item, p.format, *default_arg, **context_formatting)
             for i, (p, d) in enumerate(zip(self._cmd_parts, self._glob_detections))
         ]
-        self._executor(' '.join(cmd_parts_expanded))
+        self._executor(shlex.join(cmd_parts_expanded))
 
     def _run_single_guarded(self, args):
         try:
