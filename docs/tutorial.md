@@ -116,14 +116,15 @@ mv bar.txt bar_by_gergelyk.txt
 mv foo.txt foo_by_gergelyk.txt
 ```
 
-
-Finally, there is a special variable `i` that is the ordinal number of the command. Variable `i0` is the same thing, but starts counting from 0.
+Additionally, `i` is a special variable that is the ordinal number of the command. Variable `i0` is the same thing, but starts counting from 0.
 
 ```sh
 $ cada 'mv *.txt {i:04d}_{}' -d
 mv bar.txt 0001_bar.txt
 mv foo.txt 0002_foo.txt
 ```
+
+Finally `q` is a constant that value of which is a quote. Similarly `qq` is a double quote. This can sometimes help to avoid complex escaping.
 
 ## Eval Expressions
 
@@ -174,6 +175,14 @@ mv foo.txt foo.txt.d41d8cd98f00b204e9800998ecf8427e
 ```
 
 Cada also supports plugins that can you can use to define your own symbols and references. This will be covered in a separate chapter.
+
+Note that values of *Glob Expressions* and *Eval Expressions* are quoted before they are inserted into final command. In very rare situations this may not be intended and in case of *Eval Expressions* it can be disabled by `S` specifier. For example:
+
+```sh
+cada 'cp *.txt {:S}' '"$HOME"' -d
+cp bar.txt $HOME
+cp foo.txt $HOME
+```
 
 ## Filter Expressions
 

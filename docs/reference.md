@@ -16,6 +16,8 @@ description: Reference
 | e0, e1, ..., e(*M*-1) | XPath    | EFC          | Resolved *Eval Expressions* |
 | i                     | Index    | EFC          | Ordinal number of the command, counts from 1 |
 | i0                    | Index    | EFC          | Ordinal number of the command, counts from 0 |
+| q                     | str      | EFC          | "'" |
+| qq                    | str      | EFC          | '"' |
 | *user-defined*        | *custom* | EFC          | Defined by plugins |
 | sh                    | function | EF           | Executes command in shell, captures stdout [3] |
 | re                    | module   | EF           | [Lib/re](https://docs.python.org/3/library/re.html) |
