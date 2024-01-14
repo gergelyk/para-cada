@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "para-cada"
-version = "1.8.0"
+version = "1.9.0"
 description = "Executes your command for each file selected using glob expression(s)."
 authors = ["Grzegorz Krason <grzegorz.krason@gmail.com>"]
 readme = "README.md"
