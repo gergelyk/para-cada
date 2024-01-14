@@ -207,7 +207,7 @@ class Runner:
             index0.qual = index0 - self._skipped_number
             index.qual = index - self._skipped_number
             
-        context_vars = {'i': index, 'i0': index0}
+        context_vars = {'i': index, 'i0': index0, 'q': "'", 'qq': '"'}
         product_dict = dict(zip(self._glob_indices, product_item))
         
         plugins_instance = plugins.get_instance(tuple(product_dict.values()))
