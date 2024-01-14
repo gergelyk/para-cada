@@ -1,6 +1,6 @@
 #!/usr/bin/nu
 
-def main [component: string, token: string] {
+def main [token: string, component: string] {
   if not $component in [major minor path] {
       error make {msg: "Invalid component"}
   }
@@ -10,5 +10,5 @@ def main [component: string, token: string] {
   git push
   git tag (poetry version -s)
   git push --tags
-  poetry publish --build -u __token__ -p token
+  poetry publish --build -u __token__ -p $token
 }
