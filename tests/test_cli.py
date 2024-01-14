@@ -70,7 +70,7 @@ def test_format_error():
     assert out == ["### Error in format(): 'w' [context: 'foo.txt']"]
 
 def test_sh():
-    out = sh("""cada 'mv foo* {}' 'sh("file {s} -b --mime-type")' -d""")
+    out = sh("""cada 'mv foo* {}' 'sh(f"file {s} -b --mime-type")' -d""")
     assert out == ['mv foo.txt text/plain']
 
 def test_addons():

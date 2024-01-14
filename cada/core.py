@@ -4,6 +4,7 @@ import re
 import glob
 import shlex
 import queue
+import string
 import subprocess
 import multiprocessing as mp
 from itertools import product
@@ -65,6 +66,18 @@ class Index(int):
         self._total = value
 
 reserved_printer = ReservedPrinter()
+
+class ShlexFormatter(string.Formatter):
+    
+    def format_field(self, value, format_spec):
+        do_quote = 'S' not in format_spec
+        format_spec = format_spec.replace('S', '')
+        ret = super().format_field(value, format_spec)
+        if do_quote:
+            ret = shlex.quote(ret)
+        return ret
+
+shlex_formatter = ShlexFormatter()
 
 sort_algs = {
     'none': lambda x, r, k: reversed(x) if r else x,
@@ -213,7 +226,7 @@ class Runner:
         context_common = {
             're': re,
             'Path': Path,
-            'sh': lambda cmd: subprocess.check_output(cmd.format(**context_full), shell=True).decode().splitlines()[0].strip()            
+            'sh': lambda cmd: subprocess.check_output(cmd, shell=True).decode().splitlines()[0].strip()            
         }
         context_imports = dict(import_symbol(s) for s in self._import)
 
@@ -246,11 +259,11 @@ class Runner:
 
         context_formatting = {**symbols, **plugins_instance, **context_vars, **context_strings, **context_paths, **context_stats, **context_exprs}
         cmd_parts_expanded = [
-            product_dict[i] if d else 
-            call_guarded(product_item, p.format, *default_arg, **context_formatting)
+            shlex.quote(product_dict[i]) if d else 
+            call_guarded(product_item, shlex_formatter.format, p, *default_arg, **context_formatting)
             for i, (p, d) in enumerate(zip(self._cmd_parts, self._glob_detections))
         ]
-        self._executor(shlex.join(cmd_parts_expanded))
+        self._executor(' '.join(cmd_parts_expanded))
 
     def _run_single_guarded(self, args):
         try:
