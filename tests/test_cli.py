@@ -73,6 +73,18 @@ def test_sh():
     out = sh("""cada 'mv foo* {}' 'sh(f"file {s} -b --mime-type")' -d""")
     assert out == ['mv foo.txt text/plain']
 
+def test_quoting_disabled():
+    out = sh("""cada 'mv foo* {:S}' '"$HOME"' -d""")
+    assert out == ['mv foo.txt $HOME']
+
+def test_quoting_enabled():
+    out = sh("""cada 'mv foo* {}' '"new name"' -d""")
+    assert out == ["mv foo.txt 'new name'"]
+
+def test_q_qq():
+    out = sh("""cada 'mv foo* {}' 's.replace(q, "").replace(qq, "")' -d""")
+    assert out == ['mv foo.txt foo.txt']
+
 def test_addons():
     os.environ['CADA_CONFIG_DIR'] = '../addons'
     out = sh("""cada 'mv *.txt {s}.{e}' 'md5(c)' -d""")
