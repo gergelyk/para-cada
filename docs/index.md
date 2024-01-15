@@ -2,7 +2,7 @@
 title: Para Cada
 ---
 
-# Introduction
+# Motivation
 
 In Spanish, *Para Cada* means *For Each*. The tool executes your command for each file selected using glob expression(s).
 
