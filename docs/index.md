@@ -38,6 +38,6 @@ pip install para-cada
 
 # Documentation
 
-- ### [Tutorial](tutorial.html)
-- ### [Examples](examples.html)
-- ### [Reference](reference.html)
+- [Tutorial](tutorial.html)
+- [Examples](examples.html)
+- [Reference](reference.html)
