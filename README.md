@@ -1,4 +1,7 @@
 # para-cada
+![PyPI - Version](https://img.shields.io/pypi/v/para-cada)
+![PyPI - License](https://img.shields.io/pypi/l/para-cada)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/para-cada)
 
 *Para Cada* in Spanish means *For Each*. The tool executes your command for each file selected using glob expression(s).
 
