@@ -31,7 +31,7 @@ cada 'mv * {}.d' -f x.is_dir
 # print filenames where stem is shorter than 5 characters
 cada 'echo *' -f 'len(p.stem) < 5' -s
 
-# remove files from given range of time
+# remove files from given range of creation time
 cada 'rm *' -f '"2024-01-01" < x.ctime < "2024-01-10 12:10:00"'
 
 # to each `.tar` file add a suffix that represents MD5 sum
