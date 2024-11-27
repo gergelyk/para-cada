@@ -111,9 +111,9 @@ mv foo.txt foo_by_gergelyk.txt
 References mentioned above can be used in the *Command Expression* before or after corresponding *Glob Expression*. *Command Expression* can define a compound command. Let's have a look:
 
 ```sh
-$ cada 'mkdir -p by_{x.stem} && mv *.txt {x.stem}_by_{x.owner}{x.suffix}' -d
-mv bar.txt bar_by_gergelyk.txt
-mv foo.txt foo_by_gergelyk.txt
+$ cada 'mkdir -p by_{x.owner} && mv *.txt by_{x.owner}/' -d
+mkdir -p by_gergelyk && mv bar.txt by_gergelyk/
+mkdir -p by_gergelyk && mv foo.txt by_gergelyk/
 ```
 
 Additionally, `i` is a special variable that is the ordinal number of the command. Variable `i0` is the same thing, but starts counting from 0.
