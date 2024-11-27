@@ -3,6 +3,8 @@ title: Para Cada
 description: Tutorial
 ---
 
+<script data-goatcounter="https://para-cada.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
 # First Steps
 
 Let's start this tutorial from creating some test data:
