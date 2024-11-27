@@ -2,6 +2,8 @@
 title: Para Cada
 ---
 
+<script data-goatcounter="https://para-cada.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
 # Motivation
 
 In Spanish, *Para Cada* means *For Each*. The tool executes your command for each file selected using glob expression(s).
