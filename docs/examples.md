@@ -29,7 +29,7 @@ cada 'mv *.txt {i:04d}_{}'
 cada 'mv * {}.d' -f x.is_dir
 
 # print filenames where stem is shorter than 5 characters
-cada 'echo *' -f 'len(p.stem) < 5' -s
+cada 'echo *' -f 'len(p.stem) < 5' -q
 
 # remove files from given range of creation time
 cada 'rm *' -f '"2024-01-01" < x.ctime < "2024-01-10 12:10:00"'
