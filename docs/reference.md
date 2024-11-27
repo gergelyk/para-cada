@@ -3,6 +3,8 @@ title: Para Cada
 description: Reference
 ---
 
+<script data-goatcounter="https://para-cada.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
 # Symbols
 
 | Symbol                | Type     | Availability<sup>[1]</sup> | Description |
