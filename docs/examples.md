@@ -28,7 +28,7 @@ cada 'mv *.txt {i:04d}_{}'
 # add `.d` suffix to the names of all directories
 cada 'mv * {}.d' -f x.is_dir
 
-# print filenames where stem is shorter than 3 characters
+# print filenames where stem is shorter than 5 characters
 cada 'echo *' -f 'len(p.stem) < 5' -s
 
 # remove files from given range of time
