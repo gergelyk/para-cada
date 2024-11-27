@@ -29,7 +29,7 @@ cada 'tar xzvf *.tgz'
 
 <br>
 
-Cada knows where glob expression is. It executes entire command with subsequent values corresponding to this expression. Additionally, user may transform/filter/sort those values using regular Python syntax. Take a look at the [documentation](https://gergelyk.github.io/para-cada/).
+Cada knows how glob expressions work and executes the entire command with subsequent values corresponding to your glob expression. Additionally, users may transform/filter/sort those values using regular Python syntax. Take a look at the [documentation](https://gergelyk.github.io/para-cada/).
 
 ## Installation
 
@@ -38,3 +38,4 @@ Requirement: Python >= 3.8
 ```sh
 pip install para-cada
 ```
+
